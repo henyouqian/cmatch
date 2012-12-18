@@ -3,14 +3,14 @@
 #include <event2/event.h>
 #include "match.h"
 
-char   * bind_addr      = "0.0.0.0";
-uint16_t bind_port      = 8081;
+const char *bind_addr = "0.0.0.0";
+uint16_t bind_port = 8081;
 
 int main(int argc, char **argv)
 {
     evbase_t *evbase = event_base_new();
     evhtp_t *htp = evhtp_new(evbase, NULL);
-    register_match_cb();
+    register_match_cb(htp);
     
     if (evhtp_bind_socket(htp, bind_addr, bind_port, 128) < 0) {
         fprintf(stderr, "Could not bind socket: %s\n", strerror(errno));

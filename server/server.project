@@ -8,9 +8,9 @@
   <Description/>
   <Dependencies/>
   <VirtualDirectory Name="src">
-    <File Name="main.cpp"/>
-    <File Name="match.h"/>
-    <File Name="match.cpp"/>
+    <File Name="cm_match.h"/>
+    <File Name="cm_match.cpp"/>
+    <File Name="cm_main.cpp"/>
   </VirtualDirectory>
   <Settings Type="Executable">
     <GlobalSettings>
