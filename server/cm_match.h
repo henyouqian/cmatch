@@ -1,9 +1,9 @@
-#ifndef __MATCH_H__
-#define __MATCH_H__
+#ifndef __CM_MATCH_H__
+#define __CM_MATCH_H__
 
 #include <evhtp.h>
 
-void register_match_cb(evhtp_t *htp);
-void free_match_cb();
+void cm_register_cbs(evhtp_t *htp);
+void cm_unregister_cbs();
 
-#endif // __MATCH_H__
+#endif // __CM_MATCH_H__
