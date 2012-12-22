@@ -48,3 +48,7 @@ float CmKvs::findFloat(const char *key){
 bool CmKvs::hasError(){
     return _hasError;
 }
+
+void unused(void *p){
+    
+}

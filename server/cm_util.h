@@ -16,4 +16,6 @@ private:
     evhtp_query_t* _kvs;
 };
 
+void unused(void *p);
+
 #endif // __CM_UTIL_H__
