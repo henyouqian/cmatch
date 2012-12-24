@@ -1,8 +1,8 @@
 #include "cm_util.h"
 #include <limits.h>
 
-CmKvs::CmKvs(evhtp_request_t *req)
-:_hasError(false), _kvs(req->uri->query){
+CmKvs::CmKvs(evhtp_kvs_t *kvs)
+:_hasError(false), _kvs(kvs){
     
 }
 

@@ -2,6 +2,7 @@
 #include <evhtp.h>
 #include <event2/event.h>
 #include "cm_callback.h"
+#include "cm_test.h"
 
 const char *bind_addr = "0.0.0.0";
 uint16_t bind_port = 8081;
@@ -9,6 +10,8 @@ const int thread_nums = 8;
 
 int main(int argc, char **argv)
 {
+    cm_test();
+    
     evbase_t *evbase = event_base_new();
     evhtp_t *htp = evhtp_new(evbase, NULL);
     cm_register_cbs(htp);

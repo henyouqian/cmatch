@@ -5,7 +5,7 @@
 
 class CmKvs{
 public:
-    CmKvs(evhtp_request_t *req);
+    CmKvs(evhtp_kvs_t *kvs);
     const char* findString(const char *key);
     int findInt(const char *key);
     float findFloat(const char *key);
@@ -13,7 +13,7 @@ public:
     
 private:
     bool _hasError;
-    evhtp_query_t* _kvs;
+    evhtp_kvs_t* _kvs;
 };
 
 void unused(void *p);
