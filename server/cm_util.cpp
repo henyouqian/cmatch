@@ -49,6 +49,6 @@ bool CmKvs::hasError(){
     return _hasError;
 }
 
-void unused(void *p){
+void unused(const void *p){
     
 }

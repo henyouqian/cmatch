@@ -16,6 +16,6 @@ private:
     evhtp_kvs_t* _kvs;
 };
 
-void unused(void *p);
+void unused(const void *p);
 
 #endif // __CM_UTIL_H__
