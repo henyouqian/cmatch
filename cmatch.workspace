@@ -2,7 +2,7 @@
 <CodeLite_Workspace Name="cmatch" Database="./cmatch.tags">
   <Project Name="server" Path="server/server.project" Active="Yes"/>
   <BuildMatrix>
-    <WorkspaceConfiguration Name="Debug" Selected="yes">
+    <WorkspaceConfiguration Name="Debug" Selected="no">
       <Project Name="server" ConfigName="Debug"/>
     </WorkspaceConfiguration>
     <WorkspaceConfiguration Name="Release" Selected="yes">
