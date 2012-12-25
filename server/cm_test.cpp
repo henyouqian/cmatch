@@ -69,5 +69,6 @@ void dbtest(){
 }
 
 void cm_test(){
-    dbtest();
+    printf("begin test\n");
+    //dbtest();
 }

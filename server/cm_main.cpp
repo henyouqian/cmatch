@@ -12,6 +12,7 @@ int main(int argc, char **argv)
 {
     cm_test();
     
+    printf("begin evbase\n");
     evbase_t *evbase = event_base_new();
     evhtp_t *htp = evhtp_new(evbase, NULL);
     cm_register_cbs(htp);
