@@ -5,8 +5,8 @@
 ## Debug
 ProjectName            :=server
 ConfigurationName      :=Debug
-WorkspacePath          := "/home/henyouqian/projects/cmatch"
-ProjectPath            := "/home/henyouqian/projects/cmatch/server"
+WorkspacePath          := "/root/projects/cmatch"
+ProjectPath            := "/root/projects/cmatch/server"
 IntermediateDirectory  :=./Debug
 OutDir                 := $(IntermediateDirectory)
 CurrentFileName        :=
@@ -14,7 +14,7 @@ CurrentFilePath        :=
 CurrentFileFullPath    :=
 User                   :=李炜
 Date                   :=2012年12月24日
-CodeLitePath           :="/home/henyouqian/.codelite"
+CodeLitePath           :="/root/.codelite"
 LinkerName             :=g++
 SharedObjectLinkerName :=g++ -shared -fPIC
 ObjectSuffix           :=.o
@@ -32,7 +32,7 @@ Preprocessors          :=
 ObjectSwitch           :=-o 
 ArchiveOutputSwitch    := 
 PreprocessOnlySwitch   :=-E 
-ObjectsFileList        :="/home/henyouqian/projects/cmatch/server/server.txt"
+ObjectsFileList        :="/root/projects/cmatch/server/server.txt"
 PCHCompileFlags        :=
 MakeDirCommand         :=mkdir -p
 LinkOptions            :=  
@@ -82,52 +82,52 @@ PreBuild:
 ## Objects
 ##
 $(IntermediateDirectory)/cm_main$(ObjectSuffix): cm_main.cpp $(IntermediateDirectory)/cm_main$(DependSuffix)
-	$(CXX) $(IncludePCH) $(SourceSwitch) "/home/henyouqian/projects/cmatch/server/cm_main.cpp" $(CXXFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/cm_main$(ObjectSuffix) $(IncludePath)
+	$(CXX) $(IncludePCH) $(SourceSwitch) "/root/projects/cmatch/server/cm_main.cpp" $(CXXFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/cm_main$(ObjectSuffix) $(IncludePath)
 $(IntermediateDirectory)/cm_main$(DependSuffix): cm_main.cpp
-	@$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) -MG -MP -MT$(IntermediateDirectory)/cm_main$(ObjectSuffix) -MF$(IntermediateDirectory)/cm_main$(DependSuffix) -MM "/home/henyouqian/projects/cmatch/server/cm_main.cpp"
+	@$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) -MG -MP -MT$(IntermediateDirectory)/cm_main$(ObjectSuffix) -MF$(IntermediateDirectory)/cm_main$(DependSuffix) -MM "/root/projects/cmatch/server/cm_main.cpp"
 
 $(IntermediateDirectory)/cm_main$(PreprocessSuffix): cm_main.cpp
-	@$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/cm_main$(PreprocessSuffix) "/home/henyouqian/projects/cmatch/server/cm_main.cpp"
+	@$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/cm_main$(PreprocessSuffix) "/root/projects/cmatch/server/cm_main.cpp"
 
 $(IntermediateDirectory)/cm_util$(ObjectSuffix): cm_util.cpp $(IntermediateDirectory)/cm_util$(DependSuffix)
-	$(CXX) $(IncludePCH) $(SourceSwitch) "/home/henyouqian/projects/cmatch/server/cm_util.cpp" $(CXXFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/cm_util$(ObjectSuffix) $(IncludePath)
+	$(CXX) $(IncludePCH) $(SourceSwitch) "/root/projects/cmatch/server/cm_util.cpp" $(CXXFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/cm_util$(ObjectSuffix) $(IncludePath)
 $(IntermediateDirectory)/cm_util$(DependSuffix): cm_util.cpp
-	@$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) -MG -MP -MT$(IntermediateDirectory)/cm_util$(ObjectSuffix) -MF$(IntermediateDirectory)/cm_util$(DependSuffix) -MM "/home/henyouqian/projects/cmatch/server/cm_util.cpp"
+	@$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) -MG -MP -MT$(IntermediateDirectory)/cm_util$(ObjectSuffix) -MF$(IntermediateDirectory)/cm_util$(DependSuffix) -MM "/root/projects/cmatch/server/cm_util.cpp"
 
 $(IntermediateDirectory)/cm_util$(PreprocessSuffix): cm_util.cpp
-	@$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/cm_util$(PreprocessSuffix) "/home/henyouqian/projects/cmatch/server/cm_util.cpp"
+	@$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/cm_util$(PreprocessSuffix) "/root/projects/cmatch/server/cm_util.cpp"
 
 $(IntermediateDirectory)/cm_callback$(ObjectSuffix): cm_callback.cpp $(IntermediateDirectory)/cm_callback$(DependSuffix)
-	$(CXX) $(IncludePCH) $(SourceSwitch) "/home/henyouqian/projects/cmatch/server/cm_callback.cpp" $(CXXFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/cm_callback$(ObjectSuffix) $(IncludePath)
+	$(CXX) $(IncludePCH) $(SourceSwitch) "/root/projects/cmatch/server/cm_callback.cpp" $(CXXFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/cm_callback$(ObjectSuffix) $(IncludePath)
 $(IntermediateDirectory)/cm_callback$(DependSuffix): cm_callback.cpp
-	@$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) -MG -MP -MT$(IntermediateDirectory)/cm_callback$(ObjectSuffix) -MF$(IntermediateDirectory)/cm_callback$(DependSuffix) -MM "/home/henyouqian/projects/cmatch/server/cm_callback.cpp"
+	@$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) -MG -MP -MT$(IntermediateDirectory)/cm_callback$(ObjectSuffix) -MF$(IntermediateDirectory)/cm_callback$(DependSuffix) -MM "/root/projects/cmatch/server/cm_callback.cpp"
 
 $(IntermediateDirectory)/cm_callback$(PreprocessSuffix): cm_callback.cpp
-	@$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/cm_callback$(PreprocessSuffix) "/home/henyouqian/projects/cmatch/server/cm_callback.cpp"
+	@$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/cm_callback$(PreprocessSuffix) "/root/projects/cmatch/server/cm_callback.cpp"
 
 $(IntermediateDirectory)/cm_match$(ObjectSuffix): cm_match.cpp $(IntermediateDirectory)/cm_match$(DependSuffix)
-	$(CXX) $(IncludePCH) $(SourceSwitch) "/home/henyouqian/projects/cmatch/server/cm_match.cpp" $(CXXFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/cm_match$(ObjectSuffix) $(IncludePath)
+	$(CXX) $(IncludePCH) $(SourceSwitch) "/root/projects/cmatch/server/cm_match.cpp" $(CXXFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/cm_match$(ObjectSuffix) $(IncludePath)
 $(IntermediateDirectory)/cm_match$(DependSuffix): cm_match.cpp
-	@$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) -MG -MP -MT$(IntermediateDirectory)/cm_match$(ObjectSuffix) -MF$(IntermediateDirectory)/cm_match$(DependSuffix) -MM "/home/henyouqian/projects/cmatch/server/cm_match.cpp"
+	@$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) -MG -MP -MT$(IntermediateDirectory)/cm_match$(ObjectSuffix) -MF$(IntermediateDirectory)/cm_match$(DependSuffix) -MM "/root/projects/cmatch/server/cm_match.cpp"
 
 $(IntermediateDirectory)/cm_match$(PreprocessSuffix): cm_match.cpp
-	@$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/cm_match$(PreprocessSuffix) "/home/henyouqian/projects/cmatch/server/cm_match.cpp"
+	@$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/cm_match$(PreprocessSuffix) "/root/projects/cmatch/server/cm_match.cpp"
 
 $(IntermediateDirectory)/cm_test$(ObjectSuffix): cm_test.cpp $(IntermediateDirectory)/cm_test$(DependSuffix)
-	$(CXX) $(IncludePCH) $(SourceSwitch) "/home/henyouqian/projects/cmatch/server/cm_test.cpp" $(CXXFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/cm_test$(ObjectSuffix) $(IncludePath)
+	$(CXX) $(IncludePCH) $(SourceSwitch) "/root/projects/cmatch/server/cm_test.cpp" $(CXXFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/cm_test$(ObjectSuffix) $(IncludePath)
 $(IntermediateDirectory)/cm_test$(DependSuffix): cm_test.cpp
-	@$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) -MG -MP -MT$(IntermediateDirectory)/cm_test$(ObjectSuffix) -MF$(IntermediateDirectory)/cm_test$(DependSuffix) -MM "/home/henyouqian/projects/cmatch/server/cm_test.cpp"
+	@$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) -MG -MP -MT$(IntermediateDirectory)/cm_test$(ObjectSuffix) -MF$(IntermediateDirectory)/cm_test$(DependSuffix) -MM "/root/projects/cmatch/server/cm_test.cpp"
 
 $(IntermediateDirectory)/cm_test$(PreprocessSuffix): cm_test.cpp
-	@$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/cm_test$(PreprocessSuffix) "/home/henyouqian/projects/cmatch/server/cm_test.cpp"
+	@$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/cm_test$(PreprocessSuffix) "/root/projects/cmatch/server/cm_test.cpp"
 
 $(IntermediateDirectory)/cm_account$(ObjectSuffix): cm_account.cpp $(IntermediateDirectory)/cm_account$(DependSuffix)
-	$(CXX) $(IncludePCH) $(SourceSwitch) "/home/henyouqian/projects/cmatch/server/cm_account.cpp" $(CXXFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/cm_account$(ObjectSuffix) $(IncludePath)
+	$(CXX) $(IncludePCH) $(SourceSwitch) "/root/projects/cmatch/server/cm_account.cpp" $(CXXFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/cm_account$(ObjectSuffix) $(IncludePath)
 $(IntermediateDirectory)/cm_account$(DependSuffix): cm_account.cpp
-	@$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) -MG -MP -MT$(IntermediateDirectory)/cm_account$(ObjectSuffix) -MF$(IntermediateDirectory)/cm_account$(DependSuffix) -MM "/home/henyouqian/projects/cmatch/server/cm_account.cpp"
+	@$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) -MG -MP -MT$(IntermediateDirectory)/cm_account$(ObjectSuffix) -MF$(IntermediateDirectory)/cm_account$(DependSuffix) -MM "/root/projects/cmatch/server/cm_account.cpp"
 
 $(IntermediateDirectory)/cm_account$(PreprocessSuffix): cm_account.cpp
-	@$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/cm_account$(PreprocessSuffix) "/home/henyouqian/projects/cmatch/server/cm_account.cpp"
+	@$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/cm_account$(PreprocessSuffix) "/root/projects/cmatch/server/cm_account.cpp"
 
 
 -include $(IntermediateDirectory)/*$(DependSuffix)
@@ -154,6 +154,6 @@ clean:
 	$(RM) $(IntermediateDirectory)/cm_account$(DependSuffix)
 	$(RM) $(IntermediateDirectory)/cm_account$(PreprocessSuffix)
 	$(RM) $(OutputFile)
-	$(RM) "/home/henyouqian/projects/cmatch/.build-debug/server"
+	$(RM) "/root/projects/cmatch/.build-debug/server"
 
 
