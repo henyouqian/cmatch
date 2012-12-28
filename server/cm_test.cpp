@@ -9,26 +9,26 @@
 #include <openssl/bio.h>
 #include <postgresql/libpq-fe.h>
 
-void uuidtest(){
+void uuidtest() {
     uuid_t uuid;
     uuid_generate_time(uuid);
-    
+
     char out[64];
     uuid_unparse(uuid, out);
     printf("uuid:%s\n", out);
 }
 
-void mutextest(){
+void mutextest() {
     pthread_mutex_t mutex;
     pthread_mutex_init(&mutex,NULL);
-    for ( int i = 0; i < 10000000; ++i ){
+    for ( int i = 0; i < 10000000; ++i ) {
         pthread_mutex_lock(&mutex);
         pthread_mutex_unlock(&mutex);
     }
     pthread_mutex_destroy(&mutex);
 }
 
-void shatest(){
+void shatest() {
     SHA_CTX s;
     int i;
     unsigned char hash[20];
@@ -38,8 +38,8 @@ void shatest(){
     for (i=0; i < 20; i++)
         printf ("%.2x", (int)hash[i]);
     printf ("\n");
-    
-    for ( int i = 0; i < 100000; ++i ){
+
+    for ( int i = 0; i < 100000; ++i ) {
         char message[] = "YOYO!";
         char *b64 = base64(message, strlen(message));
         char *b = unbase64(b64, strlen(b64));
@@ -49,15 +49,15 @@ void shatest(){
 
 }
 
-void dbtest(){
-    PGconn *conn = PQsetdbLogin("127.0.0.1","5432","","","account","postgres","nmmgbnmmgb");
+void dbtest() {
+    PGconn *conn = PQsetdbLogin("127.0.0.1","5432","","","account_db","postgres","nmmgbnmmgb");
     //PQsetClientEncoding(m_conn,"GBK");
-    if (PQstatus(conn) != CONNECTION_OK){
+    if (PQstatus(conn) != CONNECTION_OK) {
         return;
     }
-    
+
     PGresult *res;
-    for ( int i = 0; i < 10000; ++i ){
+    for ( int i = 0; i < 10000; ++i ) {
         res = PQexec(conn, "SELECT id FROM user_account");
         int rows = PQntuples(res);
         unused(&rows);
@@ -67,13 +67,13 @@ void dbtest(){
 //            //printf("id: %s\n", c);
 //        }
     }
-    
+
     PQclear(res);
-    
+
     PQfinish(conn);
 }
 
-void testmemcache(){
+void testmemcache() {
     const char *config_string= "--SERVER=localhost --BINARY-PROTOCOL";
     memcached_st *memc= memcached(config_string, strlen(config_string));
     memcached_return_t rc = memcached_last_error(memc);
@@ -87,15 +87,15 @@ void testmemcache(){
     if (rc != MEMCACHED_SUCCESS) {
         printf("memcached_set error\n");
     }
-    
-    for ( int i = 0; i < 10000; ++i ) {
+
+    for (int i = 0; i < 10000; ++i) {
         memcached_return_t rc;
         size_t len;
         char* c = memcached_get(memc, "a", 1, &len, 0, &rc);
         if (rc != MEMCACHED_SUCCESS) {
             printf("%s\n", memcached_last_error_message(memc));
         }
-        if ( c ) {
+        if (c) {
             int v = *(int*)c;
             unused(&v);
             free(c);
@@ -107,34 +107,34 @@ void testmemcache(){
 
 
 static pthread_key_t key;
-static void thread_free(void *p){
+static void thread_free(void *p) {
     pthread_t* t = (pthread_t*)p;
     printf("thread_free:%lu\n", *t);
     free(p);
 }
-static void* thread_func(void* arg){
+static void* thread_func(void* arg) {
     printf("thread_func\n");
     pthread_t* p = (pthread_t*)malloc(sizeof(pthread_t));
     *p = pthread_self();
-    if ( rand()%2 >= 0 ){
+    if ( rand()%2 >= 0 ) {
         pthread_setspecific(key, p);
     }
     sleep(1);
     return NULL;
 }
 
-void testthr(){
+void testthr() {
     pthread_key_create(&key, thread_free);
     srand(time(NULL));
     pthread_t thr;
-    for ( int i = 0; i < 8; ++i ){
+    for ( int i = 0; i < 8; ++i ) {
         pthread_create(&thr, NULL, thread_func, NULL);
         //void *r = NULL;
         //pthread_join(thr, &r);
     }
 }
 
-void cm_test(){
+void cm_test() {
     //testlibpqxx();
     //testthr();
     //dbtest();

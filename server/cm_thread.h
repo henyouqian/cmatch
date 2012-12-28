@@ -7,13 +7,13 @@
 
 extern const int g_thread_nums;
 
-struct thread_ctx_t{
+struct thread_ctx{
     PGconn *accountdb;
     PGconn *cmatchdb;
     memcached_st *memc;
 };
-thread_ctx_t* cm_get_thread_ctx();
+thread_ctx *cm_get_thread_ctx();
 
-void cm_thread_init_cb(evhtp_t * htp, evthr_t * thr, void * arg);
+void cm_thread_init_cb(evhtp_t *htp, evthr_t *thr, void *arg);
 
 #endif // __CM_THREAD_H__

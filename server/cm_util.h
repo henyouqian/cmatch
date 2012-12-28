@@ -3,23 +3,24 @@
 
 #include <evhtp.h>
 
+//kvs
 class CmKvs{
 public:
     CmKvs(evhtp_kvs_t *kvs);
-    const char* findString(const char *key);
+    const char *findString(const char *key);
     int findInt(const char *key);
     float findFloat(const char *key);
     bool hasError();
     
 private:
     bool _hasError;
-    evhtp_kvs_t* _kvs;
+    evhtp_kvs_t *_kvs;
 };
 
 void unused(const void *p);
 
-char *base64(const char *input, int length);
-char *unbase64(const char *input, int length);
+char *base64(const char *input, int length);    //must free returned pointer
+char *unbase64(const char *input, int length);  //must free returned pointer
 
 typedef char sha1buf_t[16];
 void sha1(sha1buf_t out, const void *input, int len);
