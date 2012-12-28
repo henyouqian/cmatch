@@ -16,7 +16,8 @@ static inline void _send_error(int err, evhtp_request_t* req)
 }
 
 //register====================================================
-static inline void __register_clean(PGresult *res, char *pw64){
+static inline void __register_clean(PGresult *res, char *pw64)
+{
     if (res)
         PQclear(res);
     free(pw64);
@@ -34,10 +35,10 @@ void cm_register_account(evhtp_request_t *req, void *arg)
     #define _register_clean() __register_clean(res, pw64)
     
     //parse param
-    CmKvs kvs(req->uri->query);
-    const char *username = kvs.findString("username");
-    const char *password = kvs.findString("password");
-    if (kvs.hasError()) {
+    int err = 0;
+    const char *username = kvs_find_string(&err, req->uri->query, "username");
+    const char *password = kvs_find_string(&err, req->uri->query, "password");
+    if (err) {
         _send_error(err_param, req);
         return _register_clean();
     }
@@ -62,7 +63,7 @@ void cm_register_account(evhtp_request_t *req, void *arg)
     //encrypt password
     char hash[20];
     sha1(hash, password, strlen(password));
-    pw64 = base64(hash, 20); //free: free(password_b64);
+    pw64 = base64_cf(hash, 20); //free: free(password_b64);
     
     //db
     thread_ctx* pctx = cm_get_thread_ctx();
@@ -89,7 +90,8 @@ void cm_register_account(evhtp_request_t *req, void *arg)
 }
 
 //login====================================================
-static inline void __login_clean(PGresult *res, char *pw64, char *usertoken){
+static inline void __login_clean(PGresult *res, char *pw64, char *usertoken)
+{
     if (res)
         PQclear(res);
     free(pw64);
@@ -112,10 +114,10 @@ void cm_login(evhtp_request_t *req, void *arg)
     #define _login_clean() __login_clean(res, pw64, usertoken)
     
     //parse param
-    CmKvs kvs(req->uri->query);
-    const char *username = kvs.findString("username");
-    const char *password = kvs.findString("password");
-    if ( kvs.hasError() ) {
+    int err = 0;
+    const char *username = kvs_find_string(&err, req->uri->query, "username");
+    const char *password = kvs_find_string(&err, req->uri->query, "password");
+    if (err) {
         _send_error(err_param, req);
         return _login_clean();
     }
@@ -140,7 +142,7 @@ void cm_login(evhtp_request_t *req, void *arg)
     //encrypt password
     char hash[20];
     sha1(hash, password, strlen(password));
-    pw64 = base64(hash, 20); //free: free(password_b64);
+    pw64 = base64_cf(hash, 20); //free: free(password_b64);
     
     //sql select
     thread_ctx *pctx = cm_get_thread_ctx();
@@ -156,17 +158,23 @@ void cm_login(evhtp_request_t *req, void *arg)
         return _login_clean();
     }
     
+    int rownums = PQntuples(res);
+    if (rownums == 0) {
+        _send_error(err_no_user, req);
+        return _login_clean();
+    }
+    
     //userid
     const char* struserid = PQgetvalue(res, 0, 0);
     if (struserid == NULL){
-        _send_error(err_no_user, req);
+        _send_error(err_db, req);
         return _login_clean();
     }
     
     //password compare
     const char* pw = PQgetvalue(res, 0, 1);
     if (pw == NULL){
-        _send_error(err_no_user, req);
+        _send_error(err_db, req);
         return _login_clean();
     }
     if (strcmp(pw, pw64) != 0) {
@@ -174,23 +182,48 @@ void cm_login(evhtp_request_t *req, void *arg)
         return _login_clean();
     }
     
+    //delete old usertoken
+    memcached_st *memc = pctx->memc;
+    memcached_return_t rc;
+    char tokenkey[64];
+    snprintf(tokenkey, sizeof(tokenkey), "user_token_%s", ue_username);
+    size_t tokenlen = 0;
+    char *oldtoken = memcached_get(memc, tokenkey, strlen(tokenkey), &tokenlen, 0, &rc);
+    if ( oldtoken ){
+        rc = memcached_delete(memc, oldtoken, strlen(oldtoken), 0);
+        free(oldtoken);
+    }
+    
     //generate usertoken
     uuid_t uuid;
     uuid_generate(uuid);
-    usertoken = base64((const char*)uuid, sizeof(uuid)); //free: free(usertoken)
+    usertoken = base64_cf((const char*)uuid, sizeof(uuid)); //free: free(usertoken)
     
     //store memcached session
     user_session session;
     session.userid = atoi(struserid);
     
-    memcached_st *memc = pctx->memc;
-    memcached_return_t rc = memcached_set(memc, usertoken, strlen(usertoken),
-                                          (const char*)&session, sizeof(session), SESSION_LIFE_SEC, 0);
     
+    rc = memcached_set(memc, usertoken, strlen(usertoken),
+                       (const char*)&session, sizeof(session), SESSION_LIFE_SEC, 0);
     if (rc != MEMCACHED_SUCCESS) {
         _send_error(err_memc, req);
         return _login_clean();
     }
+    
+    //user token key value set
+    rc = memcached_set(memc, tokenkey, strlen(tokenkey),
+                       usertoken, strlen(usertoken)+1, SESSION_LIFE_SEC, 0);
+    if (rc != MEMCACHED_SUCCESS) {
+        _send_error(err_memc, req);
+        return _login_clean();
+    }
+    
+    //session
+    char cookie[256];
+    snprintf(cookie, sizeof(cookie), "usertoken=%s", usertoken);
+    evhtp_header_t *header = evhtp_header_new("Set-Cookie", cookie, 0, 1);
+    evhtp_headers_add_header(req->headers_out, header);
     
     //reply
     evbuffer_add_printf(req->buffer_out, "{usertoken=%s, tokenlife=%lu, username=%s, password=%s}",

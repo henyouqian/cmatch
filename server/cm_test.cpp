@@ -41,8 +41,8 @@ void shatest() {
 
     for ( int i = 0; i < 100000; ++i ) {
         char message[] = "YOYO!";
-        char *b64 = base64(message, strlen(message));
-        char *b = unbase64(b64, strlen(b64));
+        char *b64 = base64_cf(message, strlen(message));
+        char *b = unbase64_cf(b64, strlen(b64));
         free(b64);
         free(b);
     }
