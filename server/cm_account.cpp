@@ -11,8 +11,8 @@ static const time_t SESSION_LIFE_SEC = 60*60;
 
 static inline void _send_error(int err, evhtp_request_t* req)
 {
-    evbuffer_add_printf(req->buffer_out, "{error=%d}", err);
-    evhtp_send_reply(req, EVHTP_RES_BADREQ);
+    evbuffer_add_printf(req->buffer_out, "{\"error\":%d}", err);
+    evhtp_send_reply(req, EVHTP_RES_OK);
 }
 
 //register====================================================
@@ -82,7 +82,7 @@ void cm_register_account(evhtp_request_t *req, void *arg)
     }
     
     //reply
-    evbuffer_add_printf(req->buffer_out, "{username=%s, password=%s}",
+    evbuffer_add_printf(req->buffer_out, "{\"error\":0, \"username\":\"%s\", \"password\":\"%s\"}",
                         ue_username, password);
     evhtp_send_reply(req, EVHTP_RES_OK);
     
@@ -203,7 +203,6 @@ void cm_login(evhtp_request_t *req, void *arg)
     user_session session;
     session.userid = atoi(struserid);
     
-    
     rc = memcached_set(memc, usertoken, strlen(usertoken),
                        (const char*)&session, sizeof(session), SESSION_LIFE_SEC, 0);
     if (rc != MEMCACHED_SUCCESS) {
@@ -219,14 +218,17 @@ void cm_login(evhtp_request_t *req, void *arg)
         return _login_clean();
     }
     
-    //session
+    //cookie
     char cookie[256];
-    snprintf(cookie, sizeof(cookie), "usertoken=%s", usertoken);
+    snprintf(cookie, sizeof(cookie), "usertoken=%s; path=/", usertoken);
     evhtp_header_t *header = evhtp_header_new("Set-Cookie", cookie, 0, 1);
+    evhtp_headers_add_header(req->headers_out, header);
+    snprintf(cookie, sizeof(cookie), "username=%s; path=/", ue_username);
+    header = evhtp_header_new("Set-Cookie", cookie, 0, 1);
     evhtp_headers_add_header(req->headers_out, header);
     
     //reply
-    evbuffer_add_printf(req->buffer_out, "{usertoken=%s, tokenlife=%lu, username=%s, password=%s}",
+    evbuffer_add_printf(req->buffer_out, "{\"error\":0, \"usertoken\":\"%s\", \"tokenlife\":\"%lu\", \"username\":\"%s\", \"password\":\"%s\"}",
                         usertoken, SESSION_LIFE_SEC, ue_username, password);
     evhtp_send_reply(req, EVHTP_RES_OK);
 
