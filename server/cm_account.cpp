@@ -185,12 +185,9 @@ void cm_login(evhtp_request_t *req, void *arg)
     //delete old usertoken
     memcached_st *memc = pctx->memc;
     memcached_return_t rc;
-    char tokenkey[64];
-    snprintf(tokenkey, sizeof(tokenkey), "user_token_%s", ue_username);
-    size_t tokenlen = 0;
-    char *oldtoken = memcached_get(memc, tokenkey, strlen(tokenkey), &tokenlen, 0, &rc);
-    if ( oldtoken ){
-        rc = memcached_delete(memc, oldtoken, strlen(oldtoken), 0);
+    char *oldtoken = findCookie_cf(req, "usertoken");
+    if (oldtoken) {
+        memcached_delete(memc, oldtoken, strlen(oldtoken), 0);
         free(oldtoken);
     }
     
@@ -205,14 +202,6 @@ void cm_login(evhtp_request_t *req, void *arg)
     
     rc = memcached_set(memc, usertoken, strlen(usertoken),
                        (const char*)&session, sizeof(session), SESSION_LIFE_SEC, 0);
-    if (rc != MEMCACHED_SUCCESS) {
-        _send_error(err_memc, req);
-        return _login_clean();
-    }
-    
-    //user token key value set
-    rc = memcached_set(memc, tokenkey, strlen(tokenkey),
-                       usertoken, strlen(usertoken)+1, SESSION_LIFE_SEC, 0);
     if (rc != MEMCACHED_SUCCESS) {
         _send_error(err_memc, req);
         return _login_clean();

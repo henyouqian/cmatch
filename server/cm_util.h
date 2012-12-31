@@ -19,7 +19,7 @@ char *unbase64_cf(const char *input, int length);  //caller free
 typedef char sha1buf_t[16];
 void sha1(sha1buf_t out, const void *input, int len);
 
-char *findCookie(evhtp_request_t *req, const char *key);
+char *findCookie_cf(evhtp_request_t *req, const char *key); //caller free
 
 //log
 #define lwinfo(fmt, args...) do{printf("*i|"); printf(fmt, ##args); printf("|@%s\n", __FUNCTION__);}while(0)

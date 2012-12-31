@@ -2,6 +2,7 @@
 #include <limits.h>
 #include <openssl/sha.h>
 #include <openssl/bio.h>
+#include <assert.h>
 
 const char *kvs_find_string(int *err, evhtp_kvs_t *kvs, const char *key)
 {
@@ -89,7 +90,32 @@ void sha1(sha1buf_t out, const void *input, int len)
     SHA1_Final((unsigned char*)out, &s);
 }
 
-char *findCookie(evhtp_request_t *req, const char *key)
+char *findCookie_cf(evhtp_request_t *req, const char *key)
 {
+    assert(key);
+    const char *strcookie = evhtp_kv_find(req->headers_in, "Cookie");
+    if (NULL == strcookie)
+        return NULL;
+    
+    char *p = strstr(strcookie, key);
+    if (NULL == p)
+        return NULL;
+        
+    int slen = strlen(strcookie);
+    char *pend = p + slen;
+    for (; p < pend; ++p) {
+        if (*p == '=') {
+            int len = 0;
+            char *pv = ++p;
+            for (; ; ++p, ++len) {
+                if ((p == pend || *p == ';') && len != 0) {
+                    char *out = calloc(len+1, 1);
+                    memcpy(out, pv, len);
+                    return out;
+                }
+            }
+            break;
+        }
+    }
     return NULL;
 }
