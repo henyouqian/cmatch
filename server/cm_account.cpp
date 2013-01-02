@@ -25,10 +25,12 @@ static inline void __register_clean(PGresult *res, char *pw64)
 
 void cm_register_account(evhtp_request_t *req, void *arg)
 {
-    //variables
-    const int err_param = 1;
-    const int err_user_exist = 2;
-    
+    //error def
+    enum{
+        err_param = 1,
+        err_user_exist = 2,
+    };
+
     PGresult *res = NULL;
     char *pw64 = NULL;
     
@@ -101,11 +103,13 @@ static inline void __login_clean(PGresult *res, char *pw64, char *usertoken)
 void cm_login(evhtp_request_t *req, void *arg)
 {
     //error
-    const int err_param = 1;
-    const int err_no_user = 2;
-    const int err_wrong_password = 3;
-    const int err_db = 4;
-    const int err_memc = 5;
+    enum{
+        err_param = 1,
+        err_no_user = 2,
+        err_wrong_password = 3,
+        err_db = 4,
+        err_memc = 5,
+    };
     
     PGresult *res = NULL;
     char *pw64 = NULL;
@@ -222,4 +226,44 @@ void cm_login(evhtp_request_t *req, void *arg)
     evhtp_send_reply(req, EVHTP_RES_OK);
 
     _login_clean();
+}
+
+void cm_relogin(evhtp_request_t *req, void *arg){
+    //error def
+    enum{
+        err_param = 1,
+        err_nologin = 2,
+    };
+    //int err = 0;
+    
+    //parse cookie
+    char *usertoken = findCookie_cf(req, "usertoken");
+    if (!usertoken) {
+        _send_error(err_param, req);
+        return;
+    }
+    
+    
+    //get session
+    thread_ctx* pctx = cm_get_thread_ctx();
+    memcached_st *memc = pctx->memc;
+    memcached_return_t rc;
+    
+    size_t vlen = 0;
+    char *v = memcached_get(memc, usertoken, strlen(usertoken), &vlen, 0, &rc); //caller free
+    if (v == NULL) {
+        _send_error(err_nologin, req);
+        return;
+    }
+    rc = memcached_set(memc, usertoken, strlen(usertoken), v, vlen, SESSION_LIFE_SEC, 0);
+    free(v);
+    if (rc != MEMCACHED_SUCCESS) {
+        _send_error(err_nologin, req);
+        return;
+    }
+    
+    evbuffer_add_printf(req->buffer_out, "{\"error\":0}");
+    evhtp_send_reply(req, EVHTP_RES_OK);
+    
+    free(usertoken);
 }

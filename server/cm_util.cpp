@@ -103,6 +103,7 @@ char *findCookie_cf(evhtp_request_t *req, const char *key)
         
     int slen = strlen(strcookie);
     char *pend = p + slen;
+    p += strlen(key);
     for (; p < pend; ++p) {
         if (*p == '=') {
             int len = 0;

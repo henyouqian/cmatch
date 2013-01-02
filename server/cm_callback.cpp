@@ -16,6 +16,7 @@ void cm_register_cbs(evhtp_t *htp)
 {
     set_cb(htp, "/cmapi/register", cm_register_account, NULL);
     set_cb(htp, "/cmapi/login", cm_login, NULL);
+    set_cb(htp, "/cmapi/relogin", cm_relogin, NULL);
 }
 
 void cm_free_cbs()

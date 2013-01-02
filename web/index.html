@@ -1,13 +1,12 @@
-<!DOCTYPE html>
-<html>
+﻿<!DOCTYPE html>
+<html lang="utf-8">
   <head>
     <title>Cmatch System</title>
     <!--link href="https://netdna.bootstrapcdn.com/twitter-bootstrap/2.2.2/css/bootstrap-combined.min.css" rel="stylesheet"-->
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="bootstrap/css/bootstrap.min.css" rel="stylesheet">
     <link href="bootstrap/css/bootstrap-responsive.min.css" rel="stylesheet">
     <link href="bootstrap/css/docs.css" rel="stylesheet">
-    <style type="text/css">
+    <style>
       body {
         padding-top: 0px;
         padding-bottom: 40px;
@@ -46,6 +45,8 @@
           <!--nav list========================================= -->
           <div class="affix" style="margin-top: 40px;">
             <span id="login_label" class="label label-success">No login</span>
+            <span style="display:inline-block;width:80px"></span>
+            <button id="btn_logout" class="btn btn-small" type="submit" style="display:none">Sign out</button>
           </div>
           <ul class="nav nav-list bs-docs-sidenav affix">
             <li>
@@ -59,8 +60,8 @@
               </a>
             </li>
             <li>
-              <a href="#sec_test">
-                <i class="icon-chevron-right"></i>Test
+              <a href="#sec_rps">
+                <i class="icon-chevron-right"></i>RPS
               </a>
             </li>
           </ul>
@@ -89,22 +90,45 @@
               <h2 class="form-signin-heading">Please sign in</h2>
               <input id="login_username" type="text" class="input-block-level login_input" placeholder="User name">
               <input id="login_password" type="password" class="input-block-level login_input" placeholder="Password">
-              <label class="checkbox">
-                <input type="checkbox" value="remember-me"> Remember me
-              </label>
               <button id="btn_login" class="btn btn-large btn-primary" type="submit">Sign in</button>
             </div>
 
             <div id="login_alert" class="alert" style="display:none;">
           </section>
-          <!--test section========================================= -->
-          <section id="sec_test">
+          <!--rps section========================================= -->
+          <section id="sec_rps">
             <div class="page-header">
               <h1>RPS</h1>
             </div>
-            <button class="btn btn-info btn-large">Rock</button>
-            <button class="btn btn-success btn-large">Paper</button>
-            <button class="btn btn-warning btn-large">Scissors</button>
+            <div id="rps_well" class="well" style="width:398px;height:30px">
+            </div>
+            <button id="btn_rock" class="btn btn-info btn-large">Rock</button>
+            <button id="btn_paper" class="btn btn-success btn-large">Paper</button>
+            <button id="btn_scissors" class="btn btn-warning btn-large">Scissors</button>
+            <div style="display:inline; padding-left:30px"></div>
+            <button id="btn_del" class="btn btn-inverse btn-large">
+              <i class="icon-arrow-left icon-white"></i> Del
+            </button>
+            <button id="btn_clear" class="btn btn-danger btn-large">
+              <i class="icon-trash icon-white"></i> Clear
+            </button>
+            <button id="btn_battle" class="btn btn-primary btn-large" style="display:none" data-loading-text="Submitting...">
+                <i class="icon-screenshot icon-white"></i> Battle!
+            </button>
+
+            <div id="rps_modal" class="modal hide fade" aria-hidden="false">
+              <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                <h3>来自XieMin博客的消息</h3>
+              </div>
+              <div class="modal-body">
+                <p>欢迎光临？</p>
+              </div>
+              <div class="modal-footer">
+                <a id="btn_rps_modal_ok" class="btn btn-primary" data-dismiss="modal" aria-hidden="true">OK</a>
+              </div>
+            </div>
+
           </section>
         </div>
       </div>
