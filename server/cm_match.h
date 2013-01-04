@@ -9,7 +9,7 @@ typedef uint64_t DBID;
 void initCmatch();
 DBID genDBID();
 
-class Game{
+class Game {
 private:
     static Game* create();
     
@@ -18,7 +18,7 @@ private:
     std::string _name;
 };
 
-class Match{
+class Match {
 public:
     Match();
     ~Match();

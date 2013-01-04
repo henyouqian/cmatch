@@ -1,14 +1,14 @@
 #include "cm_match.h"
 
-namespace{
+namespace {
     DBID _idmax = 0;
 }
 
-void initCmatch(){
+void initCmatch() {
     //todo: load _idmax
     _idmax = 1;
 }
 
-DBID genDBID(){
+DBID genDBID() {
     return ++_idmax;
 }

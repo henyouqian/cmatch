@@ -1,4 +1,4 @@
-(function(){
+//(function(){
 
 //cookie
 function getCookie(c_name) {
@@ -21,7 +21,7 @@ function setCookie(c_name,value,expiredays) {
         ((expiredays==null) ? "" : ";expires="+exdate.toGMTString());
 }
 
-delCookie = function delCookie(c_name){
+function delCookie(c_name){
     setCookie(c_name, 0, -1);
 }
 
@@ -38,13 +38,14 @@ function bsalert(alert, type, text) {
     }else if (type == "warning") {
         alert.attr("class", "alert");
     }
+    alert.fadeIn("fast");
 }
 
 $(document).ready(function(){
     //ajax error
-    $("body").ajaxError(function() {
-      alert("ajax error");
-    });
+    // $("body").ajaxError(function() {
+    //   alert("ajax error");
+    // });
 
     //try relogin
     relogin();
@@ -113,26 +114,27 @@ $(document).ready(function(){
 function register() {
     var username=$("#reg_username").attr("value");
     var password=$("#reg_password").attr("value");
+    var alert = $("#reg_alert");
     $.getJSON("/cmapi/register", {username:username, password:password}, function(json) {
         var err = json.error;
-        var alert = $("#reg_alert");
-        alert.fadeIn("fast");
         if (err==0) {
             bsalert(alert, "success", "Sign up succeed!");
         }else{
             bsalert(alert, "error", "Sign up failed! error:"+err);
         }
+    })
+    .error(function(){
+        bsalert(alert, "error", "net error");
     });
 }
 
 function login() {
     var username=$("#login_username").attr("value");
     var password=$("#login_password").attr("value");
+    var alert = $("#login_alert");
     $.getJSON("/cmapi/login", {username:username, password:password}, function(json){
         var err = json.error;
-        var alert = $("#login_alert");
-        var username = json.username;
-        alert.fadeIn("fast");
+        var username = getCookie("username");
         if (err==0) {
             bsalert(alert, "success", "Sign in succeed!");
             $("#login_label").text("Logged in as: "+username);
@@ -140,13 +142,16 @@ function login() {
         } else {
             bsalert(alert, "error", "Sign in failed:"+err);
         }
+    })
+    .error(function(){
+        bsalert(alert, "error", "net error");
     });
 }
 
 function relogin() {
     var usertoken = getCookie("usertoken");
     if (usertoken) {
-        $.getJSON("/cmapi/relogin", {usertoken:usertoken}, function(json){
+        $.getJSON("/cmapi/relogin", function(json){
             var err = json.error;
             if (err==0) {
                 var username = getCookie("username");
@@ -157,11 +162,18 @@ function relogin() {
                 delCookie("username");
             }
         });
-    } 
+    }
 }
 
 function logout() {
-
+    var usertoken = getCookie("usertoken");
+    if (usertoken) {
+        $.getJSON("/cmapi/logout", {usertoken:usertoken});
+    }
+    $("#login_label").text("No login");
+    $("#btn_logout").hide();
+    delCookie("usertoken");
+    delCookie("username");
 }
 
 //=======================================
@@ -209,18 +221,39 @@ function btn_clear() {
 }
 
 function btn_battle(btn) {
-    btn.button('loading');
-    setTimeout(function () {
-      btn.button('reset')
+    var timeout = setTimeout(function () {
+      btn.button("reset")
     }, 3000);
 
-    $("#rps_modal").modal( {
-        keyboard: false,
-        backdrop: 'static'});
+    var data = rps_data.join("");
+    if (data.length != rps_max_data_len) {
+        alert("data.length != rps_max_data_len");
+        return;
+    }
+    var alert = $("#rps_alert");
+    $.getJSON("/cmapi/rps", {data:data}, function(json){
+        var err = json.error;
+        if (err==0) {
+            bsalert(alert, "success", "success");
+            $("#rps_modal").modal( {
+                keyboard: false,
+                backdrop: "static"});
+            //todo
+        } else {
+            bsalert(alert, "error", "rps error:"+err);
+        }
+        clearTimeout(timeout);
+        btn.button("reset");
+    })
+    .error(function(){
+        bsalert(alert, "error", "net error");
+    });
+
+    btn.button("loading");
 }
 
 function btn_modal_ok() {
     console.log(modal, ok);
 }
 
-})()
+//})()

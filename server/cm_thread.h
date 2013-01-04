@@ -7,7 +7,7 @@
 
 extern const int g_thread_nums;
 
-struct thread_ctx{
+struct thread_ctx {
     PGconn *accountdb;
     PGconn *cmatchdb;
     memcached_st *memc;

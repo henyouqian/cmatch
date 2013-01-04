@@ -5,25 +5,21 @@ const int g_thread_nums = 8;
 static pthread_key_t thrkey;
 static pthread_once_t init_done = PTHREAD_ONCE_INIT;
 
-static void free_func(void *arg)
-{
+static void free_func(void *arg) {
     thread_ctx *pctx = (thread_ctx*)arg;
     PQfinish(pctx->accountdb);
     PQfinish(pctx->cmatchdb);
 }
 
-static void init_once(void)
-{
+static void init_once(void) {
     pthread_key_create(&thrkey, free_func);
 }
 
-thread_ctx *cm_get_thread_ctx()
-{
+thread_ctx *cm_get_thread_ctx() {
     return (thread_ctx*)(pthread_getspecific(thrkey));
 }
 
-void cm_thread_init_cb(evhtp_t *htp, evthr_t *thr, void *arg)
-{
+void cm_thread_init_cb(evhtp_t *htp, evthr_t *thr, void *arg) {
     pthread_once(&init_done, init_once);
     
     thread_ctx *pctx = (thread_ctx*)malloc(sizeof(thread_ctx));

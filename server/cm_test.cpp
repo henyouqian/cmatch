@@ -8,6 +8,8 @@
 #include <openssl/sha.h>
 #include <openssl/bio.h>
 #include <postgresql/libpq-fe.h>
+#include <memory>
+#include <string>
 
 void uuidtest() {
     uuid_t uuid;
@@ -42,7 +44,8 @@ void shatest() {
     for ( int i = 0; i < 100000; ++i ) {
         char message[] = "YOYO!";
         char *b64 = base64_cf(message, strlen(message));
-        char *b = unbase64_cf(b64, strlen(b64));
+        size_t len;
+        char *b = (char*)unbase64_cf(b64, &len);
         free(b64);
         free(b);
     }
@@ -133,6 +136,9 @@ void testthr() {
         //pthread_join(thr, &r);
     }
 }
+
+#include <map>
+
 
 void cm_test() {
     //testlibpqxx();

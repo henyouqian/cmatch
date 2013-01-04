@@ -12,15 +12,19 @@
     <File Name="cm_util.h"/>
     <File Name="cm_callback.h"/>
     <File Name="cm_callback.cpp"/>
-    <File Name="cm_match.h"/>
-    <File Name="cm_match.cpp"/>
     <File Name="cm_test.h"/>
     <File Name="cm_test.cpp"/>
-    <File Name="cm_account.h"/>
     <File Name="cm_thread.h"/>
-    <File Name="cm_account.cpp"/>
     <File Name="cm_thread.cpp"/>
     <File Name="cm_util.cpp"/>
+    <VirtualDirectory Name="msgcb">
+      <File Name="cm_account.cpp"/>
+      <File Name="cm_account.h"/>
+      <File Name="cm_match.cpp"/>
+      <File Name="cm_match.h"/>
+      <File Name="cm_rps.h"/>
+      <File Name="cm_rps.cpp"/>
+    </VirtualDirectory>
   </VirtualDirectory>
   <Settings Type="Executable">
     <GlobalSettings>
@@ -33,7 +37,7 @@
       <ResourceCompiler Options=""/>
     </GlobalSettings>
     <Configuration Name="Debug" CompilerType="gnu g++" DebuggerType="GNU gdb debugger" Type="Executable" BuildCmpWithGlobalSettings="append" BuildLnkWithGlobalSettings="append" BuildResWithGlobalSettings="append">
-      <Compiler Options="-g;-O0;-Wall" C_Options="-g;-O0;-Wall" Required="yes" PreCompiledHeader="" PCHInCommandLine="no" UseDifferentPCHFlags="no" PCHFlags="">
+      <Compiler Options="-g;-O0;-Wall;-std=c++0x" C_Options="-g;-O0;-Wall" Required="yes" PreCompiledHeader="" PCHInCommandLine="no" UseDifferentPCHFlags="no" PCHFlags="">
         <IncludePath Value="."/>
       </Compiler>
       <Linker Options="" Required="yes">
@@ -94,6 +98,7 @@
       <General OutputFile="$(IntermediateDirectory)/$(ProjectName)" IntermediateDirectory="./Release" Command="./$(ProjectName)" CommandArguments="" UseSeparateDebugArgs="no" DebugArguments="" WorkingDirectory="$(IntermediateDirectory)" PauseExecWhenProcTerminates="yes"/>
       <Environment EnvVarSetName="&lt;Use Defaults&gt;" DbgSetName="&lt;Use Defaults&gt;">
         <![CDATA[
+      
       ]]>
       </Environment>
       <Debugger IsRemote="no" RemoteHostName="" RemoteHostPort="" DebuggerPath="">
