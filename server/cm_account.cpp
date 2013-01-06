@@ -138,6 +138,11 @@ void cm_send_error(int err, evhtp_request_t* req) {
     evhtp_send_reply(req, EVHTP_RES_OK);
 }
 
+void cm_send_ok(evhtp_request_t* req) {
+    evbuffer_add_printf(req->buffer_out, "{\"error\":0}");
+    evhtp_send_reply(req, EVHTP_RES_OK);
+}
+
 //register====================================================
 void cm_register(evhtp_request_t *req, void *arg) {
     //error def

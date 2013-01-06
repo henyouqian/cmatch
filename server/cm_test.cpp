@@ -1,5 +1,6 @@
 #include "cm_test.h"
 #include "cm_util.h"
+#include "cm_buf.h"
 #include <uuid/uuid.h>
 #include <stdio.h>
 #include <libmemcached/memcached.h>
@@ -10,6 +11,7 @@
 #include <postgresql/libpq-fe.h>
 #include <memory>
 #include <string>
+#include <hiredis/hiredis.h>
 
 void uuidtest() {
     uuid_t uuid;
@@ -76,7 +78,7 @@ void dbtest() {
     PQfinish(conn);
 }
 
-void testmemcache() {
+void memcachetest() {
     const char *config_string= "--SERVER=localhost --BINARY-PROTOCOL";
     memcached_st *memc= memcached(config_string, strlen(config_string));
     memcached_return_t rc = memcached_last_error(memc);
@@ -126,7 +128,7 @@ static void* thread_func(void* arg) {
     return NULL;
 }
 
-void testthr() {
+void threadtest() {
     pthread_key_create(&key, thread_free);
     srand(time(NULL));
     pthread_t thr;
@@ -137,13 +139,50 @@ void testthr() {
     }
 }
 
-#include <map>
-
+void redistest() {
+    redisContext *c = redisConnect("127.0.0.1", 6379);
+    if (c->err) {
+        printf("Error: %s\n", c->errstr);
+        return;
+    }
+    
+    char buf[1024];
+    MemIO mio;
+    mio.set(buf, sizeof(buf));
+    mio.writeInt(345);
+    mio.writeInt(111);
+    mio.printf("liwei%dwuhaili%.2f", 34, 2.23f);
+    mio.writeFloat(23.43f);
+    mio.writeInt64(345834854389532);
+    
+    redisReply *reply = (redisReply*)redisCommand(c, "set a %b", mio.p0, mio.p-mio.p0);
+    freeReplyObject(reply);
+    
+    reply = (redisReply*)redisCommand(c, "get a");
+    char *p = (reply->str);
+    mio.set(p, reply->len);
+    int a = mio.readInt();
+    a = mio.readInt();
+    char* b = mio.readString();
+    float d = mio.readFloat();
+    int64_t e = mio.readInt64();
+    lwinfo("%d, %s, %f, %lld", a, b, d, e);
+    freeReplyObject(reply);
+    
+    int age = 31;
+    reply = (redisReply*)redisCommand(c, "HSET myhmap age %b", &age, 4);
+    freeReplyObject(reply);
+    
+    reply = (redisReply*)redisCommand(c, "HGET myhmap age");
+    mio.set(reply->str, reply->len);
+    age = mio.readInt();
+    lwinfo("age:%i", age);
+    freeReplyObject(reply);
+    
+    
+    redisFree(c);
+}
 
 void cm_test() {
-    //testlibpqxx();
-    //testthr();
-    //dbtest();
-    //testmemcache();
-    //shatest();
+    redistest();
 }

@@ -3,14 +3,14 @@
 
 #include <evhtp.h>
 #include <postgresql/libpq-fe.h>
-#include <libmemcached/memcached.h>
+#include <hiredis/hiredis.h>
 
 extern const int g_thread_nums;
 
 struct thread_ctx {
     PGconn *accountdb;
     PGconn *cmatchdb;
-    memcached_st *memc;
+    redisContext *redis;
 };
 thread_ctx *cm_get_thread_ctx();
 

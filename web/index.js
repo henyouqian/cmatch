@@ -1,5 +1,10 @@
 //(function(){
 
+//rps data
+var rps_data = [];
+var rps_max_data_len = 10;
+
+//helper function=====================================================
 //cookie
 function getCookie(c_name) {
     if (document.cookie.length>0) {
@@ -25,10 +30,6 @@ function delCookie(c_name){
     setCookie(c_name, 0, -1);
 }
 
-//rps data
-var rps_data = [];
-var rps_max_data_len = 10;
-
 function bsalert(alert, type, text) {
     alert.text(text);
     if (type == "success") {
@@ -41,6 +42,16 @@ function bsalert(alert, type, text) {
     alert.fadeIn("fast");
 }
 
+function defaultErrProc(err) {
+    if (err == 2){
+        $("#login_label").text("No login");
+        $("#btn_logout").hide();
+        delCookie("usertoken");
+        delCookie("username");
+    }
+}
+
+//=====================================================
 $(document).ready(function(){
     //ajax error
     // $("body").ajaxError(function() {
@@ -240,6 +251,7 @@ function btn_battle(btn) {
                 backdrop: "static"});
             //todo
         } else {
+            defaultErrProc(err);
             bsalert(alert, "error", "rps error:"+err);
         }
         clearTimeout(timeout);

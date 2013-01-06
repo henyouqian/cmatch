@@ -9,6 +9,7 @@ static void free_func(void *arg) {
     thread_ctx *pctx = (thread_ctx*)arg;
     PQfinish(pctx->accountdb);
     PQfinish(pctx->cmatchdb);
+    redisFree(pctx->redis);
 }
 
 static void init_once(void) {
@@ -40,7 +41,6 @@ void cm_thread_init_cb(evhtp_t *htp, evthr_t *thr, void *arg) {
         assert(0);
     }
     
-    //memcache
-    const char *config_string= "--SERVER=localhost --BINARY-PROTOCOL";
-    pctx->memc= memcached(config_string, strlen(config_string));
+    //redis
+    pctx->redis = redisConnect("127.0.0.1", 6379);
 }

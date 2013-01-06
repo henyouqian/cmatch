@@ -9,7 +9,23 @@
 const char *bind_addr = "0.0.0.0";
 uint16_t bind_port = 8081;
 
+void *input_thread(void *arg) {
+    while (1) {
+        char string [256];
+        fgets(string, sizeof(string), stdin);
+        if (strcmp(string, "exit\n") == 0) {
+            exit(0);
+        } else {
+            printf("what???\n");
+        }
+    }
+    return NULL;
+}
+
 int main(int argc, char **argv) {
+    pthread_t thread;
+    pthread_create(&thread, NULL, input_thread, NULL);
+    
     cm_test();
     
     evbase_t *evbase = event_base_new();
@@ -28,6 +44,7 @@ int main(int argc, char **argv) {
     cm_free_cbs();
     evhtp_free(htp);
     event_base_free(evbase);
+    pthread_cancel(thread);
     
 	return 0;
 }
