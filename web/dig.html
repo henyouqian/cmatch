@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta name="viewport" content="initial-scale=1.0, user-scalable=no" />
+    <style>
+      body {
+        padding-top: 50px;
+        padding-bottom: 50px;
+      }
+      .unselectable {
+          -moz-user-select:none;
+          -webkit-user-select:none;
+      }
+    </style>
+  </head>
+  <body">
+    <div unselectable="on" class="unselectable">
+      <div id="map_canvas" style="width:640px; height:480px; margin:0 auto 0 auto"></div>
+      <canvas id="dig_canvas" style="position:absolute;display=none" width="640" height="480" style="border:1px solid; float:left"></canvas>
+      <div id="info_div">zoom:</div>
+    </div>
+    
+    <script id="map_script" src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDV1vKgc2Mku3MKZruYPosTvaxmRw3jvMc&sensor=false"></script>
+    <script src="jquery/jquery-1.8.3.min.js"></script>
+    <script src="jquery/jquery.mousewheel.js"></script>
+    <script src="mousetrap/mousetrap.min.js"></script>
+    <script src="dig.js"></script>
+  </body>
+</html>

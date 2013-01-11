@@ -1,118 +1,46 @@
 #include "cm_account.h"
-#include "cm_thread.h"
 #include "cm_util.h"
+#include "cm_context.h"
 #include <postgresql/libpq-fe.h>
 #include <uuid/uuid.h>
 #include <map>
 #include <list>
 #include <string>
 
-static const size_t USERNAME_MAX = 40;
-static const size_t PASSWORD_MAX = 40;
 static const size_t UNESC_BUF_MAX = 100;
 static const time_t SESSION_LIFE_SEC = 60*60;   //one hour
 
-namespace {
-    class SessionMgr {
-    public:
-        typedef std::map<std::string, cm_session, std::less<std::string>, PoolAllocator<std::pair<std::string, cm_session> ,4096> > SessionMap;
-        typedef std::list<SessionMap::iterator, PoolAllocator<SessionMap::iterator, 4096> > ExpireList;
-        
-        SessionMgr();
-        ~SessionMgr();
-        void newSession(std::string &newtoken, cm_session& insession);
-        void delSession(const char *token);
-        int findSession(const char *token, cm_session& session);
-        void checkExpire();
-        pthread_rwlock_t *getLocker();
-        
-    private:
-        SessionMap _sessions;
-        ExpireList _expires;
-        pthread_rwlock_t _locker;
-        pthread_t _thread;
-    };
+static void newSession(std::string &newtoken, cm_session& insession) {
+    uuid_t uuid;
+    uuid_generate(uuid);
+    char *token = base64_cf((const char*)uuid, sizeof(uuid));
+    Autofree af_token(token);
+    newtoken = token;
     
-    static SessionMgr _sessionMgr;
-    
-    void *thread_check_expire(void *arg) {
-        while (1){
-            _sessionMgr.checkExpire();
-            sleep(1);
-        }
-        return NULL;
+    redisContext *redis = cm_get_context()->redis;
+    redisReply *reply = (redisReply*)redisCommand(redis, "SETEX session:%s %u %b",
+                                     token, SESSION_LIFE_SEC, &insession, sizeof(insession));
+    freeReplyObject(reply);
+}
+
+static void delSession(const char* token) {
+    redisContext *redis = cm_get_context()->redis;
+    redisReply *reply = (redisReply*)redisCommand(redis, "DEL session:%s", token);
+    freeReplyObject(reply);
+}
+
+static int findSession(const char *token, cm_session& session) {
+    redisContext *redis = cm_get_context()->redis;
+    redisReply *reply = (redisReply*)redisCommand(redis, "GET session:%s", token);
+    int r = 0;
+    if (reply->type == REDIS_REPLY_STRING && reply->len == sizeof(session)) {
+        memcpy(&session, reply->str, sizeof(session));
+    } else {
+        r = -1;
     }
-    
-    SessionMgr::SessionMgr() {
-        pthread_rwlock_init(&_locker, NULL);
-        pthread_create(&_thread, NULL, thread_check_expire, NULL);
-    }
-    
-    SessionMgr::~SessionMgr() {
-        pthread_rwlock_destroy(&_locker);
-        pthread_cancel(_thread);
-    }
-    
-    void SessionMgr::newSession(std::string &newtoken, cm_session& insession) {
-        uuid_t uuid;
-        uuid_generate(uuid);
-        char *token = base64_cf((const char*)uuid, sizeof(uuid));
-        newtoken = token;
-        Autofree af_token(token);
-        
-        insession._deleted = false;
-        insession.expire = time(NULL)+SESSION_LIFE_SEC;
-        
-        pthread_rwlock_wrlock(&_locker);
-        SessionMgr::SessionMap::iterator it = _sessions.insert(std::make_pair(token, insession)).first;
-        _expires.push_back(it);
-        pthread_rwlock_unlock(&_locker);
-    }
-    
-    void SessionMgr::delSession(const char* token) {
-        SessionMgr::SessionMap::iterator it = _sessions.find(token);
-        pthread_rwlock_wrlock(&_locker);
-        if (it != _sessions.end()) {
-            it->second._deleted = true;
-        }
-        pthread_rwlock_unlock(&_locker);
-    }
-    
-    int SessionMgr::findSession(const char *token, cm_session& session) {
-        pthread_rwlock_rdlock(&_locker);
-        SessionMgr::SessionMap::iterator it = _sessions.find(token);
-        if (it != _sessions.end()) {
-            if (!it->second._deleted) {
-                session = it->second;
-                pthread_rwlock_unlock(&_locker);
-                return 0;
-            }
-        }
-        pthread_rwlock_unlock(&_locker);
-        return -1;
-    }
-    
-    void SessionMgr::checkExpire() {
-        pthread_rwlock_wrlock(&_locker);
-        time_t t = time(NULL);
-        ExpireList::iterator it = _expires.begin();
-        ExpireList::iterator itend = _expires.end();
-        for (; it != itend; ) {
-            if ((*it)->second.expire <= t) {
-                _sessions.erase(*it);
-                it = _expires.erase(it);
-            } else {
-                break;
-            }
-        }
-        pthread_rwlock_unlock(&_locker);
-    }
-    
-    pthread_rwlock_t *SessionMgr::getLocker() {
-        return &_locker;
-    }
-    
-}   //namespace
+    freeReplyObject(reply);
+    return r;
+}
 
 //====================================================
 int cm_find_session(evhtp_request_t *req, cm_session &session) {
@@ -126,7 +54,7 @@ int cm_find_session(evhtp_request_t *req, cm_session &session) {
     }
     Autofree af_usertoken(usertoken);
     
-    int err = _sessionMgr.findSession(usertoken, session);
+    int err = findSession(usertoken, session);
     if (err) {
         return err_not_found;
     }
@@ -184,7 +112,7 @@ void cm_register(evhtp_request_t *req, void *arg) {
     Autofree af_pw64(pw64);
     
     //db
-    thread_ctx* pctx = cm_get_thread_ctx();
+    cm_context* pctx = cm_get_context();
     PGconn *acdb = pctx->accountdb;
     const char *vars[2] = {
         ue_username,
@@ -250,7 +178,7 @@ void cm_login(evhtp_request_t *req, void *arg) {
     Autofree af_pw64(pw64);
     
     //sql select
-    thread_ctx *pctx = cm_get_thread_ctx();
+    cm_context* pctx = cm_get_context();
     PGconn *acdb = pctx->accountdb;
     const char *vars[1] = { 
         ue_username
@@ -292,11 +220,12 @@ void cm_login(evhtp_request_t *req, void *arg) {
     char *oldtoken = findCookie_cf(req, "usertoken");
     cm_session session;
     session.userid = atoi(struserid);
+    strncpy(session.username, ue_username, sizeof(session.username));
     std::string usertoken;
     if (oldtoken) {
-        _sessionMgr.delSession(oldtoken);
+        delSession(oldtoken);
     }
-    _sessionMgr.newSession(usertoken, session);
+    newSession(usertoken, session);
     
     //cookie
     char cookie[256];
@@ -327,9 +256,9 @@ void cm_relogin(evhtp_request_t *req, void *arg) {
     }
     char *usertoken = findCookie_cf(req, "usertoken");
     Autofree af_usertoken(usertoken);
-    _sessionMgr.delSession(usertoken);
+    delSession(usertoken);
     std::string strusertoken;
-    _sessionMgr.newSession(strusertoken, session);
+    newSession(strusertoken, session);
     
     //cookie
     char cookie[256];
@@ -357,7 +286,7 @@ void cm_logout(evhtp_request_t *req, void *arg) {
     }
     
     //delete usertoken
-    _sessionMgr.delSession(usertoken);
+    delSession(usertoken);
     
     evbuffer_add_printf(req->buffer_out, "{\"error\":0}");
     evhtp_send_reply(req, EVHTP_RES_OK);

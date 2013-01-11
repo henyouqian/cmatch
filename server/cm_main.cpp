@@ -2,7 +2,6 @@
 #include <evhtp.h>
 #include <event2/event.h>
 #include "cm_callback.h"
-#include "cm_thread.h"
 #include "cm_test.h"
 #include "cm_util.h"
 
@@ -37,7 +36,7 @@ int main(int argc, char **argv) {
         exit(-1);
     }
     
-    evhtp_use_threads(htp, cm_thread_init_cb, g_thread_nums, NULL);
+    //evhtp_use_threads(htp, cm_thread_init_cb, g_thread_nums, NULL);
     lwinfo("server start");
     event_base_loop(evbase, 0);
     

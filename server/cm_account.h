@@ -4,10 +4,14 @@
 #include <evhtp.h>
 #include <stdint.h>
 
+enum {
+    USERNAME_MAX = 40,
+    PASSWORD_MAX = 40,
+};
+
 struct cm_session {
     uint64_t userid;
-    time_t expire;
-    bool _deleted;
+    char username[USERNAME_MAX];
 };
 
 enum {

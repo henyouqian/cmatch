@@ -3,6 +3,7 @@
 //rps data
 var rps_data = [];
 var rps_max_data_len = 10;
+var anim_handle = 0;
 
 //helper function=====================================================
 //cookie
@@ -48,6 +49,85 @@ function defaultErrProc(err) {
         $("#btn_logout").hide();
         delCookie("usertoken");
         delCookie("username");
+    }
+}
+
+(function() {
+    var lastTime = 0;
+    var vendors = ['ms', 'moz', 'webkit', 'o'];
+    for(var x = 0; x < vendors.length && !window.requestAnimationFrame; ++x) {
+        window.requestAnimationFrame = window[vendors[x]+'RequestAnimationFrame'];
+        window.cancelAnimationFrame = 
+          window[vendors[x]+'CancelAnimationFrame'] || window[vendors[x]+'CancelRequestAnimationFrame'];
+    }
+ 
+    if (!window.requestAnimationFrame)
+        window.requestAnimationFrame = function(callback, element) {
+            var currTime = new Date().getTime();
+            var timeToCall = Math.max(0, 16 - (currTime - lastTime));
+            var id = window.setTimeout(function() { callback(currTime + timeToCall); }, 
+              timeToCall);
+            lastTime = currTime + timeToCall;
+            return id;
+        };
+ 
+    if (!window.cancelAnimationFrame)
+        window.cancelAnimationFrame = function(id) {
+            clearTimeout(id);
+        };
+}());
+
+var Base64Binary = {
+    _keyStr : "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=",
+
+    /* will return a  Uint8Array type */
+    decodeArrayBuffer: function(input) {
+        var bytes = (input.length/4) * 3;
+        var ab = new ArrayBuffer(bytes);
+        this.decode(input, ab);
+
+        return ab;
+    },
+
+    decode: function(input, arrayBuffer) {
+        //get last chars to see if are valid
+        var lkey1 = this._keyStr.indexOf(input.charAt(input.length-1));      
+        var lkey2 = this._keyStr.indexOf(input.charAt(input.length-2));      
+
+        var bytes = (input.length/4) * 3;
+        if (lkey1 == 64) bytes--; //padding chars, so skip
+        if (lkey2 == 64) bytes--; //padding chars, so skip
+
+        var uarray;
+        var chr1, chr2, chr3;
+        var enc1, enc2, enc3, enc4;
+        var i = 0;
+        var j = 0;
+
+        if (arrayBuffer)
+            uarray = new Uint8Array(arrayBuffer);
+        else
+            uarray = new Uint8Array(bytes);
+
+        input = input.replace(/[^A-Za-z0-9\+\/\=]/g, "");
+
+        for (i=0; i<bytes; i+=3) {  
+            //get the 3 octects in 4 ascii chars
+            enc1 = this._keyStr.indexOf(input.charAt(j++));
+            enc2 = this._keyStr.indexOf(input.charAt(j++));
+            enc3 = this._keyStr.indexOf(input.charAt(j++));
+            enc4 = this._keyStr.indexOf(input.charAt(j++));
+
+            chr1 = (enc1 << 2) | (enc2 >> 4);
+            chr2 = ((enc2 & 15) << 4) | (enc3 >> 2);
+            chr3 = ((enc3 & 3) << 6) | enc4;
+
+            uarray[i] = chr1;           
+            if (enc3 != 64) uarray[i+1] = chr2;
+            if (enc4 != 64) uarray[i+2] = chr3;
+        }
+
+        return uarray;  
     }
 }
 
@@ -119,7 +199,26 @@ $(document).ready(function(){
         var btn = $(this);
         btn_battle(btn);
     });
+    $("#btn_dig").click(function() {
+        window.location.href="dig.html";
+    });
     
+
+    $("#img1").load(function(){
+        draw(0);
+
+        var canvas = $("#dig_canvas")[0];
+        var ctx = canvas.getContext("2d");
+        var w = canvas.width;
+        var h = canvas.height;
+        imgdata = ctx.getImageData(0, 0, 14, 14);
+        console.log(imgdata);
+    });
+    
+    $.getJSON("/cmapi/getblock", function(json) {
+        a8 = Base64Binary.decode(json.data);
+        console.log(a8);
+    });
 });
 
 function register() {
@@ -241,24 +340,27 @@ function btn_battle(btn) {
         alert("data.length != rps_max_data_len");
         return;
     }
-    var alert = $("#rps_alert");
+    var alt = $("#rps_alert");
     $.getJSON("/cmapi/rps", {data:data}, function(json){
         var err = json.error;
         if (err==0) {
-            bsalert(alert, "success", "success");
+            bsalert(alt, "success", "success");
+            $("#rps_msg").text("opponame:"+json.opponame+", rps:"+json.rps);
+
             $("#rps_modal").modal( {
                 keyboard: false,
                 backdrop: "static"});
-            //todo
         } else {
             defaultErrProc(err);
-            bsalert(alert, "error", "rps error:"+err);
+            bsalert(alt, "error", "rps error:"+err);
         }
         clearTimeout(timeout);
         btn.button("reset");
     })
     .error(function(){
-        bsalert(alert, "error", "net error");
+        clearTimeout(timeout);
+        btn.button("reset");
+        bsalert(alt, "error", "net error");
     });
 
     btn.button("loading");
@@ -266,6 +368,39 @@ function btn_battle(btn) {
 
 function btn_modal_ok() {
     console.log(modal, ok);
+}
+
+function get_random_color() {
+    var letters = '0123456789ABCDEF'.split('');
+    var color = '#';
+    for (var i = 0; i < 6; i++ ) {
+        color += letters[Math.round(Math.random() * 15)];
+    }
+    return color;
+}
+
+var _t = 0;
+function draw(t) {
+    var canvas = $("#dig_canvas")[0];
+    var ctx = canvas.getContext("2d");
+    var w = canvas.width;
+    var h = canvas.height;
+    var d = 16;
+    var _d = d-1;
+
+    _t += 0.1;
+    ctx.clearRect(0, 0, w, h);
+    var x0 = Math.sin(_t)*10;
+    var img = $("#img1").get(0);
+    for (y = 0; y < h; y += d) {
+        for ( x = 0; x < w; x += d ) {
+            // ctx.fillStyle = get_random_color();
+            // ctx.fillRect(x0+x, y, _d, _d);
+        }
+    }
+    ctx.drawImage(img, 90, 383, 14, 14, 0, 0, 14, 14);
+    
+    anim_handle = requestAnimationFrame(draw);
 }
 
 //})()

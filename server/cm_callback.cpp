@@ -1,6 +1,7 @@
 #include "cm_callback.h"
 #include "cm_account.h"
 #include "cm_rps.h"
+#include "cm_dig.h"
 #include <vector>
 
 namespace {
@@ -19,6 +20,9 @@ void cm_register_cbs(evhtp_t *htp) {
     set_cb(htp, "/cmapi/logout", cm_logout, NULL);
     
     set_cb(htp, "/cmapi/rps", cm_rps, NULL);
+    set_cb(htp, "/cmapi/img", cm_img, NULL);
+    set_cb(htp, "/cmapi/getblock", cm_getblock, NULL);
+    
 }
 
 void cm_free_cbs() {

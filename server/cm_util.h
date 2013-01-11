@@ -3,6 +3,7 @@
 
 #include <evhtp.h>
 #include <vector>
+#include <stdint.h>
 
 const char *kvs_find_string(int *err, evhtp_kvs_t *kvs, const char *key);
 int kvs_find_int(int *err, evhtp_kvs_t *kvs, const char *key);
@@ -76,5 +77,52 @@ public:
 private:
     Mempool _mpool;
 };
+
+struct MemIO{
+    char* p0;
+    char* p;
+    int capacity;
+    bool overflow;
+    
+    MemIO();
+    MemIO(char* ptr, int capacity);
+    ~MemIO();
+    void set(char* ptr, int capacity);
+    int remain();
+    int length();
+    
+    void            write(const void *src, int nbytes); //return writed data ptr, so you can set value later
+    void            writeChar(char v);
+    void            writeUchar(unsigned char v);
+    void            writeShort(short v);
+    void            writeUshort(unsigned short v);
+    void            writeInt(int v);
+    void            writeUint(unsigned int v);
+    void            writeInt64(int64_t v);
+    void            writeUint64(uint64_t v);
+    void            writeFloat(float v);
+    void            writeString(const char *str);
+    void            printf(const char *fmt, ...);
+    
+    void            read(void* buf, unsigned int nbytes);
+    void*           read(unsigned int nbytes);
+    char            readChar();
+    unsigned char   readUchar();
+    short           readShort();
+    unsigned short  readUshort();
+    int             readInt();
+    unsigned int    readUint();
+    int64_t         readInt64();
+    uint64_t        readUint64();
+    float           readFloat();
+    char*           readString();
+};
+
+int32_t     s2int32(const char* str, int* err = NULL);
+uint32_t    s2uint32(const char* str, int* err = NULL);
+int64_t     s2int64(const char* str, int* err = NULL);
+uint64_t    s2uint64(const char* str, int* err = NULL);
+float       s2float(const char* str, int* err = NULL);
+double      s2double(const char* str, int* err = NULL);
 
 #endif // __CM_UTIL_H__

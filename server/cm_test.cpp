@@ -1,6 +1,5 @@
 #include "cm_test.h"
 #include "cm_util.h"
-#include "cm_buf.h"
 #include <uuid/uuid.h>
 #include <stdio.h>
 #include <libmemcached/memcached.h>
@@ -179,10 +178,9 @@ void redistest() {
     lwinfo("age:%i", age);
     freeReplyObject(reply);
     
-    
     redisFree(c);
 }
 
 void cm_test() {
-    redistest();
+    //redistest();
 }

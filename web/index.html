@@ -64,6 +64,11 @@
                 <i class="icon-chevron-right"></i>RPS
               </a>
             </li>
+            <li>
+              <a href="#sec_dig">
+                <i class="icon-chevron-right"></i>Dig the world
+              </a>
+            </li>
           </ul>
         </div>
         <div class="span9">
@@ -78,7 +83,7 @@
               <input id="reg_password" type="password" class="input-block-level reg_input" placeholder="Password">
               <button id="btn_register" class="btn btn-large btn-primary" type="submit">Sign up</button>
             </div>
-            <div id="reg_alert" class="alert" style="display:none;">
+            <div id="reg_alert" class="alert" style="display:none;"></div>
           </section>
 
           <!--login section========================================= -->
@@ -93,7 +98,7 @@
               <button id="btn_login" class="btn btn-large btn-primary" type="submit">Sign in</button>
             </div>
 
-            <div id="login_alert" class="alert" style="display:none;">
+            <div id="login_alert" class="alert" style="display:none;"></div>
           </section>
           <!--rps section========================================= -->
           <section id="sec_rps">
@@ -120,16 +125,26 @@
             <div id="rps_modal" class="modal hide fade" aria-hidden="false">
               <div class="modal-header">
                 <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-                <h3>来自XieMin博客的消息</h3>
+                <h3>liwei</h3>
               </div>
               <div class="modal-body">
-                <p>欢迎光临？</p>
+                <p id="rps_msg"></p>
               </div>
               <div class="modal-footer">
                 <a id="btn_rps_modal_ok" class="btn btn-primary" data-dismiss="modal" aria-hidden="true">OK</a>
               </div>
             </div>
-
+          </section>
+          <!--dig section========================================= -->
+          <section id="sec_dig">
+            <div class="page-header">
+              <h1>Dig</h1>
+            </div>
+            <button id="btn_dig" class="btn btn-primary btn-large" style="width:200px; height:60px">Dig</button>
+            <div style="display:none">
+              <canvas id="dig_canvas" width="720" height="480" style="border:1px solid;"></canvas>
+              <img id="img1" src="/cmapi/img?x=1&y=2"/>
+            </div>
           </section>
         </div>
       </div>
