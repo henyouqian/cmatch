@@ -48,107 +48,114 @@ void unused(const void *p) {
      
 }
 
-//for same sort result
-//static unsigned char encoding_table[] = {   '+', '/', '0', '1', '2', '3', '4', '5', 
-//                                            '6', '7', '8', '9', 'A', 'B', 'C', 'D', 
-//                                            'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 
-//                                            'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 
-//                                            'U', 'V', 'W', 'X', 'Y', 'Z', 'a', 'b', 
-//                                            'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 
-//                                            'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 
-//                                            's', 't', 'u', 'v', 'w', 'x', 'y', 'z',  };
 
-//standard
-static unsigned char encoding_table[] = {   'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H',
-                                            'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P',
-                                            'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X',
-                                            'Y', 'Z', 'a', 'b', 'c', 'd', 'e', 'f',
-                                            'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n',
-                                            'o', 'p', 'q', 'r', 's', 't', 'u', 'v',
-                                            'w', 'x', 'y', 'z', '0', '1', '2', '3',
-                                            '4', '5', '6', '7', '8', '9', '+', '/'};
-                                
-static unsigned char *decoding_table = NULL;
-static int mod_table[] = {0, 2, 1};
 
-class decoding_table_builder{
-public:
-    decoding_table_builder(){
-        decoding_table = (unsigned char*)malloc(256);
-        for (int i = 0; i < 0x40; i++)
-            decoding_table[encoding_table[i]] = i;
-    }
-    ~decoding_table_builder(){
-        free(decoding_table);
-    }
+
+
+
+const char encodeCharacterTable[65] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+const char decodeCharacterTable[256] = {
+    -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1
+    ,-1,62,-1,-1,-1,63,52,53,54,55,56,57,58,59,60,61,-1,-1,-1,-1,-1,-1,-1,0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21
+    ,22,23,24,25,-1,-1,-1,-1,-1,-1,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,-1,-1,-1,-1,-1,
+    -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,
+    -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1
+    ,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,
+    -1,-1,-1
 };
-
-decoding_table_builder _decoding_table_builder;
-
-char *base64_cf(const void *indata,
-                    size_t input_length) {
-    const char *data = (const char*)indata;
-    size_t output_length = (size_t) (4.0 * ceil((double) input_length / 3.0));
-
-    unsigned char *encoded_data = (unsigned char*)malloc(output_length+1);
-    if (encoded_data == NULL) return NULL;
-    encoded_data[output_length] = 0;
+char *base64_cf(const void *in, size_t input_length) {
+    unsigned char *input = (unsigned char*)in;
+    char buff1[3];
+    char buff2[4];
+    unsigned char i=0, j;
+    unsigned input_cnt=0;
+    unsigned output_cnt=0;
     
-    for (size_t i = 0, j = 0; i < input_length;) {
-
-        uint32_t octet_a = i < input_length ? data[i++] : 0;
-        uint32_t octet_b = i < input_length ? data[i++] : 0;
-        uint32_t octet_c = i < input_length ? data[i++] : 0;
-
-        uint32_t triple = (octet_a << 0x10) + (octet_b << 0x08) + octet_c;
-
-        encoded_data[j++] = encoding_table[(triple >> 3 * 6) & 0x3F];
-        encoded_data[j++] = encoding_table[(triple >> 2 * 6) & 0x3F];
-        encoded_data[j++] = encoding_table[(triple >> 1 * 6) & 0x3F];
-        encoded_data[j++] = encoding_table[(triple >> 0 * 6) & 0x3F];
+    size_t output_length = (size_t) (4.0 * ceil((double) input_length / 3.0));
+    unsigned char *output = (unsigned char*)malloc(output_length+1);
+    if (output == NULL) return NULL;
+    output[output_length] = 0;
+    
+    while(input_cnt<input_length) {
+        buff1[i++] = input[input_cnt++];
+        if (i==3) {
+            output[output_cnt++] = encodeCharacterTable[(buff1[0] & 0xfc) >> 2];
+            output[output_cnt++] = encodeCharacterTable[((buff1[0] & 0x03) << 4) + ((buff1[1] & 0xf0) >> 4)];
+            output[output_cnt++] = encodeCharacterTable[((buff1[1] & 0x0f) << 2) + ((buff1[2] & 0xc0) >> 6)];
+            output[output_cnt++] = encodeCharacterTable[buff1[2] & 0x3f];
+            i=0;
+        }
     }
-
-    for (int i = 0; i < mod_table[input_length % 3]; i++)
-        encoded_data[output_length - 1 - i] = '=';
-
-    return (char*)encoded_data;
+    if (i) {
+        for(j=i; j<3; j++) {
+            buff1[j] = '\0';
+        }
+        buff2[0] = (buff1[0] & 0xfc) >> 2;
+        buff2[1] = ((buff1[0] & 0x03) << 4) + ((buff1[1] & 0xf0) >> 4);
+        buff2[2] = ((buff1[1] & 0x0f) << 2) + ((buff1[2] & 0xc0) >> 6);
+        buff2[3] = buff1[2] & 0x3f;
+        for (j=0; j<(i+1); j++) {
+            output[output_cnt++] = encodeCharacterTable[(int)buff2[j]];
+        }
+        while(i++<3) {
+            output[output_cnt++] = '=';
+        }
+    }
+    return (char*)output;
 }
-
-
-void *unbase64_cf(const char *indata,
-                    size_t *output_length) {
-    size_t input_length = strlen(indata);
-    const unsigned char *data = (const unsigned char*)indata;
-
+void *unbase64_cf(const char *input, size_t *output_length) {
+    char buff1[4];
+    char buff2[4];
+    unsigned char i=0, j;
+    unsigned input_cnt=0;
+    unsigned output_cnt=0;
+    
+    size_t input_length = strlen(input);
     if (input_length % 4 != 0) return NULL;
-
     *output_length = input_length / 4 * 3;
-    if (data[input_length - 1] == '=') (*output_length)--;
-    if (data[input_length - 2] == '=') (*output_length)--;
+    if (input[input_length - 1] == '=') (*output_length)--;
+    if (input[input_length - 2] == '=') (*output_length)--;
 
-    char *decoded_data = (char*)malloc(*output_length+1);
-    decoded_data[*output_length] = 0;
-    if (decoded_data == NULL) return NULL;
-
-    for (size_t i = 0, j = 0; i < input_length;) {
-
-        uint32_t sextet_a = data[i] == '=' ? 0 & i++ : decoding_table[data[i++]];
-        uint32_t sextet_b = data[i] == '=' ? 0 & i++ : decoding_table[data[i++]];
-        uint32_t sextet_c = data[i] == '=' ? 0 & i++ : decoding_table[data[i++]];
-        uint32_t sextet_d = data[i] == '=' ? 0 & i++ : decoding_table[data[i++]];
-
-        uint32_t triple = (sextet_a << 3 * 6)
-                        + (sextet_b << 2 * 6)
-                        + (sextet_c << 1 * 6)
-                        + (sextet_d << 0 * 6);
-
-        if (j < *output_length) decoded_data[j++] = (triple >> 2 * 8) & 0xFF;
-        if (j < *output_length) decoded_data[j++] = (triple >> 1 * 8) & 0xFF;
-        if (j < *output_length) decoded_data[j++] = (triple >> 0 * 8) & 0xFF;
+    char *output = (char*)malloc(*output_length+1);
+    output[*output_length] = 0;
+    if (output == NULL) return NULL;
+    
+    while(input_cnt<input_length) {
+        buff2[i] = input[input_cnt++];
+        if (buff2[i] == '=') {
+            break;
+        }
+        if (++i==4) {
+            for (i=0; i!=4; i++) {
+                buff2[i] = decodeCharacterTable[(int)buff2[i]];
+            }
+            output[output_cnt++] = (char)((buff2[0] << 2) + ((buff2[1] & 0x30) >> 4));
+            output[output_cnt++] = (char)(((buff2[1] & 0xf) << 4) + ((buff2[2] & 0x3c) >> 2));
+            output[output_cnt++] = (char)(((buff2[2] & 0x3) << 6) + buff2[3]);
+            i=0;
+        }
     }
-
-    return decoded_data;
+    if (i) {
+        for (j=i; j<4; j++) {
+            buff2[j] = '\0';
+        }
+        for (j=0; j<4; j++) {
+            buff2[j] = decodeCharacterTable[(int)buff2[j]];
+        }
+        buff1[0] = (buff2[0] << 2) + ((buff2[1] & 0x30) >> 4);
+        buff1[1] = ((buff2[1] & 0xf) << 4) + ((buff2[2] & 0x3c) >> 2);
+        buff1[2] = ((buff2[2] & 0x3) << 6) + buff2[3];
+        for (j=0; j<(i-1); j++) {
+            output[output_cnt++] = (char)buff1[j];
+        }
+    }
+    return output;
 }
+
+
+
+
+
 
 void sha1(sha1buf_t out, const void *input, int len) {
     SHA_CTX s;
@@ -496,3 +503,104 @@ double s2double(const char* str, int* err) {
         return 0.0;
     }
 }
+
+CommaReader::CommaReader(const char* str)
+:_p(str), _status(0) {
+    if (_p == NULL)
+        _status = err_null_ptr;
+}
+
+int CommaReader::getStatus() {
+    return _status;
+}
+
+int CommaReader::readInt(int &out) {
+    if (_status)
+        return _status = err_already_err;
+        
+    const char* p0 = _p;
+    while (1) {
+        if (*_p == 0 || *_p == ',')
+            break;
+        ++_p;
+    }
+    if (_p == p0)
+        return _status = err_empty_section;
+        
+    char buf[32] = {0};
+    if (_p-p0 >= (int)sizeof(buf))
+        return _status = err_too_long;
+    
+    memcpy(buf, p0, _p-p0);
+    int err = 0;
+    out = s2int32(buf, &err);
+    if (err)
+        return _status = err_type_convert;
+    
+    if (*_p == 0)
+        _status = status_end;
+    else if (*_p == ',')
+        ++_p;
+        
+    return 0;
+}
+
+int CommaReader::readFloat(float &out) {
+    if (_status)
+        return _status = err_already_err;
+        
+    const char* p0 = _p;
+    while (1) {
+        if (*_p == 0 || *_p == ',')
+            break;
+        ++_p;
+    }
+    if (_p == p0)
+        return _status = err_empty_section;
+        
+    char buf[32] = {0};
+    if (_p-p0 >= (int)sizeof(buf))
+        return _status = err_too_long;
+    
+    memcpy(buf, p0, _p-p0);
+    int err = 0;
+    out = s2float(buf, &err);
+    if (err)
+        return _status = err_type_convert;
+    
+    if (*_p == 0)
+        _status = status_end;
+    else if (*_p == ',')
+        ++_p;
+        
+    return 0;
+}
+
+int CommaReader::readString(std::string &out) {
+    if (_status)
+        return _status = err_already_err;
+        
+    const char* p0 = _p;
+    while (1) {
+        if (*_p == 0 || *_p == ',')
+            break;
+        ++_p;
+    }
+    if (_p == p0)
+        return _status = err_empty_section;
+        
+    char buf[32] = {0};
+    if (_p-p0 >= (int)sizeof(buf))
+        return _status = err_too_long;
+    
+    memcpy(buf, p0, _p-p0);
+    out = buf;
+    
+    if (*_p == 0)
+        _status = status_end;
+    else if (*_p == ',')
+        ++_p;
+        
+    return 0;
+}
+    

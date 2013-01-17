@@ -22,7 +22,7 @@ void cm_register_cbs(evhtp_t *htp) {
     set_cb(htp, "/cmapi/rps", cm_rps, NULL);
     set_cb(htp, "/cmapi/img", cm_img, NULL);
     set_cb(htp, "/cmapi/getblock", cm_getblock, NULL);
-    
+    set_cb(htp, "/cmapi/dig", cm_dig, NULL);
 }
 
 void cm_free_cbs() {

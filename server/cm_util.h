@@ -4,6 +4,7 @@
 #include <evhtp.h>
 #include <vector>
 #include <stdint.h>
+#include <string>
 
 const char *kvs_find_string(int *err, evhtp_kvs_t *kvs, const char *key);
 int kvs_find_int(int *err, evhtp_kvs_t *kvs, const char *key);
@@ -124,5 +125,27 @@ int64_t     s2int64(const char* str, int* err = NULL);
 uint64_t    s2uint64(const char* str, int* err = NULL);
 float       s2float(const char* str, int* err = NULL);
 double      s2double(const char* str, int* err = NULL);
+
+class CommaReader {
+public:
+    CommaReader(const char* str);
+    int getStatus();
+    int readInt(int &out);
+    int readFloat(float &out);
+    int readString(std::string &out);
+    
+    enum {
+        err_null_ptr = -1,
+        err_already_err = -2,
+        err_empty_section = -3,
+        err_too_long = -4,
+        err_type_convert = -5,
+        status_end = 1,
+    };
+    
+private:
+    const char *_p;
+    int _status;    //0:ok <0:error 1:end
+};
 
 #endif // __CM_UTIL_H__

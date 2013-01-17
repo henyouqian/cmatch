@@ -183,4 +183,6 @@ void redistest() {
 
 void cm_test() {
     //redistest();
+    int n = strlen("xxx");
+    lwinfo("%d", n);
 }
