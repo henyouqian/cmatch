@@ -41,4 +41,8 @@ void cm_relogin(evhtp_request_t *req, void *arg);
 //return err_param = -1, err_nologin = -2
 void cm_logout(evhtp_request_t *req, void *arg);
 
+//register or login
+//username:string&password:string
+void cm_reglog(evhtp_request_t *req, void *arg);
+
 #endif // __CM_ACCOUNT_H__

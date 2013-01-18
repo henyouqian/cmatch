@@ -4,6 +4,7 @@
 #include "cm_callback.h"
 #include "cm_test.h"
 #include "cm_util.h"
+#include "cm_context.h"
 
 const char *bind_addr = "0.0.0.0";
 uint16_t bind_port = 8081;
@@ -44,6 +45,6 @@ int main(int argc, char **argv) {
     evhtp_free(htp);
     event_base_free(evbase);
     pthread_cancel(thread);
-    
+    pthread_cancel(cm_get_context()->tid);
 	return 0;
 }

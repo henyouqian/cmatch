@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html>
   <head>
+    <meta charset="utf-8">
     <meta name="viewport" content="initial-scale=1.0, user-scalable=no" />
     <style>
       body {
@@ -11,25 +12,69 @@
           -moz-user-select:none;
           -webkit-user-select:none;
       }
+      .form-signin {
+        max-width: 300px;
+        padding: 19px 29px 29px;
+        margin: 0 auto 20px;
+        background-color: #f5f5f5;
+        border: 1px solid #e5e5e5;
+        -webkit-border-radius: 5px;
+           -moz-border-radius: 5px;
+                border-radius: 5px;
+        -webkit-box-shadow: 0 1px 2px rgba(0,0,0,.05);
+           -moz-box-shadow: 0 1px 2px rgba(0,0,0,.05);
+                box-shadow: 0 1px 2px rgba(0,0,0,.05);
+      }
+      .form-signin .form-signin-heading,
+      .form-signin .checkbox {
+        margin-bottom: 10px;
+      }
+      .form-signin input[type="text"],
+      .form-signin input[type="password"] {
+        font-size: 16px;
+        height: auto;
+        margin-bottom: 15px;
+        padding: 7px 9px;
+      }
     </style>
+    <link href="bootstrap/css/bootstrap.min.css" rel="stylesheet">
+    <link href="bootstrap/css/bootstrap-responsive.min.css" rel="stylesheet">
   </head>
   <body>
-    <div id="login_text"></div>
+    <span id="login_text" class="label label-success"></span>
+    <button id="btn_logout" class="btn btn-small" type="submit" style="">Sign up/in</button>
     <p>Move: w, a, s, d; &nbsp &nbsp Dig: space; &nbsp &nbsp Fill: backspace; &nbsp &nbsp Zoom: up, down, mouse wheel; &nbsp &nbsp  </p>
     <p></p>
 
     <div unselectable="on" class="unselectable">
       <div id="map_canvas" style="width:640px; height:480px; margin:0 auto 0 auto"></div>
       <canvas id="dig_canvas" width="640" height="480" style="position:absolute;"></canvas>
-      <div id="info_div">zoom:</div>
+      <div id="info_div">zoom:10</div>
     </div>
 
-    
+    <!--login modal========================================= -->
+    <div id="rps_modal" class="modal hide fade" aria-hidden="false">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+        <h3>Sign up/Sign in</h3>
+      </div>
+      <div class="modal-body">
+        <p id="rps_msg"></p>
+        <div class="form-signin">
+          <h2 class="form-signin-heading">Please sign up/in</h2>
+          <input id="input_username" type="text" class="input-block-level reg_input" placeholder="User name">
+          <input id="input_password" type="password" class="input-block-level reg_input" placeholder="Password">
+          <button id="btn_sign" class="btn btn-large btn-primary" type="submit">Sign up/in</button>
+        </div>
+        <div id="reg_alert" class="alert" style="display:none;"></div>
+      </div>
+    </div>
     
     <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDV1vKgc2Mku3MKZruYPosTvaxmRw3jvMc&sensor=false"></script>
     <script src="jquery/jquery-1.8.3.min.js"></script>
     <script src="jquery/jquery.mousewheel.js"></script>
     <script src="mousetrap/mousetrap.min.js"></script>
+    <script src="bootstrap/js/bootstrap.min.js"></script>
     <script src="dig.js"></script>
   </body>
 </html>

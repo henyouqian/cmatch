@@ -1,7 +1,20 @@
 #include "cm_context.h"
 #include <assert.h>
+#include <unistd.h>
 
 static cm_context _cm_context;
+
+static void *check_thread(void* arg) {
+    while(1) {
+        sleep(5);
+        redisContext *redis = cm_get_context()->redis;
+        if (redis->err == REDIS_ERR_IO) {
+            _cm_context.redis = redisConnect("127.0.0.1", 6379);
+        }
+    }
+    
+    return NULL;
+}
 
 namespace {
     class ContextLife {
@@ -23,6 +36,9 @@ namespace {
             
             //redis
             _cm_context.redis = redisConnect("127.0.0.1", 6379);
+            
+            //check thread
+            pthread_create(&(_cm_context.tid), NULL, check_thread, NULL);
         }
         ~ContextLife() {
             PQfinish(_cm_context.accountdb);

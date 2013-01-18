@@ -23,31 +23,6 @@ void cm_img(evhtp_request_t *req, void *arg) {
     //close(fd);
 }
 
-//static int getInt(const char **pp, int* err){
-//    if (pp == NULL || *pp == NULL) {
-//        *err = 1;
-//        return 0;
-//    }
-//    if (err == NULL) {
-//        return 0;
-//    }
-//    if (*err) {
-//        return 0;
-//    }
-//    
-//    const char* p0 = *pp;
-//    while ((**pp) != ',' && (**pp) != 0) {
-//        ++(*pp);
-//    }
-//    char buf[32] = {0};
-//    if ( *pp != p0 )
-//        memcpy(buf, p0, (*pp)-p0);
-//        
-//    int n = s2int32(buf, err);
-//    if ((**pp) != 0)
-//        ++(*pp);
-//    return n;
-//}
 
 void cm_getblock(evhtp_request_t *req, void *arg) {
     enum {
@@ -62,9 +37,31 @@ void cm_getblock(evhtp_request_t *req, void *arg) {
     evbuffer_copyout(evbuf, inbuf, sz);
     inbuf[sz] = 0;
     
+    CommaReader commaReader(inbuf);
+    float posX, posY;
+    commaReader.readFloat(posX);
+    commaReader.readFloat(posY);
+    if (commaReader.getStatus()){
+        return cm_send_error(err_param, req);
+    }
+    
+    redisContext *redis = cm_get_context()->redis;
+    if (redis->err) {
+        return cm_send_error(err_db, req);
+    }
+    
+    cm_session session;
+    int err = cm_find_session(req, session);
+    if (err == 0) {
+        redisReply *reply = (redisReply*)redisCommand(redis, "HMSET diguser:%llu x %.1f y %.1f",session.userid, posX, posY);
+        if (reply == NULL){
+            return cm_send_error(err_db, req);
+        }
+        freeReplyObject(reply);
+    }
+    
     std::stringstream ss;
     ss << "MGET";
-    CommaReader commaReader(inbuf);
     size_t nBlock = 0;
     std::vector<int> xys;
     while (1) {
@@ -88,36 +85,6 @@ void cm_getblock(evhtp_request_t *req, void *arg) {
         return cm_send_error(err_param, req);
     }
     
-//    const char* p = (const char*)inbuf;
-//    std::vector<int> xys;
-//    while (1) {
-//        int x = getInt(&p, &err);
-//        int y = getInt(&p, &err);
-//        if (x < 0 || x >= BLOCK_MAX || y < 0 || y >= BLOCK_MAX) {
-//            err = err_param;
-//        }
-//        if (err)
-//            break;
-//        xys.push_back(x);
-//        xys.push_back(y);
-//    }
-//    if (xys.empty()) {
-//        return cm_send_error(err_param, req);
-//    }
-//    
-//    std::stringstream ss;
-//    ss << "MGET";
-//    std::vector<int>::iterator it = xys.begin();
-//    std::vector<int>::iterator end = xys.end();
-//    for (; it != end; ) {
-//        int x = *it;
-//        ++it;
-//        int y = *it;
-//        ++it;
-//        ss << " block:" << x << "," << y; 
-//    }
-    
-    redisContext *redis = cm_get_context()->redis;
     redisReply *reply = (redisReply*)redisCommand(redis, ss.str().c_str());
     if (reply == NULL){
         return cm_send_error(err_param, req);
@@ -197,4 +164,34 @@ void cm_dig(evhtp_request_t *req, void *arg) {
     
     freeReplyObject(reply);
     
+}
+
+void cm_diguser_info(evhtp_request_t *req, void *arg) {
+    enum {
+        err_nologin = -1,
+        err_db = -2,
+    };
+    redisContext *redis = cm_get_context()->redis;
+    if (redis->err) {
+        return cm_send_error(err_db, req);
+    }
+    
+    cm_session session;
+    int err = cm_find_session(req, session);
+    if (err) {
+        return cm_send_error(err_nologin, req);
+    }
+    redisReply *reply = (redisReply*)redisCommand(redis, "HMGET diguser:%llu x y",session.userid);
+    if (reply == NULL || reply->type != REDIS_REPLY_ARRAY || reply->elements != 2) {
+        return cm_send_error(err_db, req);
+    }
+    const char *x = reply->element[0]->str;
+    const char *y = reply->element[1]->str;
+    if (x == NULL || y == NULL) { //not saved
+        x = "-1";
+        y = "-1";
+    }
+    evbuffer_add_printf(req->buffer_out, "{\"error\":0, \"x\":\"%s\", \"y\":\"%s\"}", x, y);
+    evhtp_send_reply(req, EVHTP_RES_OK);
+    freeReplyObject(reply);
 }

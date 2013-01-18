@@ -1,8 +1,8 @@
-var map;
+﻿var map;
 var tileData = {};
 var tileTime = {};
-var centerX = 0;
-var centerY = 0;
+var centerX = -1;
+var centerY = -1;
 var centerOffsetX = 0;
 var centerOffsetY = 0;
 var TILE_MAX = 32768;
@@ -21,12 +21,38 @@ var moveLeft = false;
 var moveRight = false;
 var time;
 var showMap = false;
+var frame_handle = 0;
 
 function googleExist() {
 	if (typeof(google) == "object"){
 		return true;
 	}
 	return false;
+}
+
+function bsalert(alert, type, text) {
+    alert.text(text);
+    if (type == "success") {
+        alert.attr("class", "alert alert-success");
+    }else if (type == "error") {
+        alert.attr("class", "alert alert-error");
+    }else if (type == "warning") {
+        alert.attr("class", "alert");
+    }
+    alert.fadeIn("fast");
+}
+
+function getCookie(c_name) {
+    if (document.cookie.length>0) {
+        c_start=document.cookie.indexOf(c_name + "=");
+        if (c_start!=-1) {
+            c_start=c_start + c_name.length+1;
+            c_end=document.cookie.indexOf(";",c_start);
+            if (c_end==-1) c_end=document.cookie.length;
+            return unescape(document.cookie.substring(c_start,c_end))
+        }
+    }
+    return "";
 }
 
 function canvasAdj() {
@@ -81,7 +107,7 @@ function setCenter(x, y) {
 	centerY = y;
 
 	if (blockX1 != blockX2 || blockY1 != blockY2) {
-    	updateBlocks();
+    	fetchBlocks();
     }
 }
 
@@ -159,12 +185,12 @@ function getTileLen(){
 }
 
 var lastFetchBlockTime = 0;
-function updateBlocks(notry) {
+function fetchBlocks(notry) {
 	var t = new Date().getTime();
 	var timeInterval = 1000;
 	if (t < lastFetchBlockTime + timeInterval) {
 		if (typeof(notry) == "undefined")
-			setTimeout("updateBlocks(1);", timeInterval);
+			setTimeout("fetchBlocks(1);", timeInterval);
 			console.log("pending fetch block");
 		return;
 	}
@@ -182,8 +208,8 @@ function updateBlocks(notry) {
 	var blockY = Math.floor(top/TILES_PER_BLOCK_SIDE)-1;
 
 	var x, y, blkX, blkY;
-	var data = "";
-	var i = 0;
+	var data = (Math.floor(centerX)+0.5) + "," + (Math.floor(centerY)+0.5) + ",";
+	var blockNum = 0;
 	for (y = canvasY, blkY = blockY; ; y += blockLen, ++blkY) {
 		if (y > canvasH + blockLen)
 			break;
@@ -195,11 +221,11 @@ function updateBlocks(notry) {
 			// 	++i;
 			// }
 			data += blkX + "," + blkY + ",";
-			++i;
+			++blockNum;
 		}
 	}
-	console.log("fetch:"+i);
-	if (data.length > 0) {
+	console.log("fetch:"+blockNum);
+	if (blockNum > 0) {
 		$.post("/cmapi/getblock", data, function(json) {
 			var err = json.error;
 			if (err==0) {
@@ -394,7 +420,6 @@ function draw(dt) {
 		ctx.fillRect(0, 0, canvasW, canvasH);
 		return;
 	}
-	 
 	
 	if (zoom >= ZOOM_LOW && zoom <= 18) {
 		var tileLen = getTileLen();
@@ -446,13 +471,37 @@ function draw(dt) {
 			ctx.fillRect(canvasW/2-r, canvasH/2-r, r*2, r*2);
 		}
 	}
+	ctx.font = "400 32px/2 黑体";
+	ctx.globalAlpha = 1.0;
+	ctx.fillStyle = "#ff0000";
+	ctx.textBaseline = "middle";
+	ctx.textAlign = "center";
+	ctx.fillText("a", 16, 16);
+	ctx.fillText("A", 16, 48);
 }
 
+var fetchInterval = 0;
 function init() {
-	setCenter(27437.5, 13388.5);
-	updateBlocks();
-	frame();
-	setInterval("updateBlocks()", 5000+Math.random()*500);
+	$.getJSON("/cmapi/diguserinfo", function(json) {
+        var err = json.error;
+        if (err==0) {
+        	if (json.x != -1) {
+        		var x = json.x;
+            	var y = json.y;
+            	setCenter(x, y);
+        	}
+        }
+        if (centerX == -1) {
+        	setCenter(27437.5, 13388.5);
+        	$("#login_text").text("Hello Guest!");
+        }
+        
+		fetchBlocks();
+		cancelAnimationFrame(frame_handle);
+		frame();
+		clearInterval(fetchInterval);
+		fetchInterval = setInterval("fetchBlocks()", 5000+Math.random()*500);
+    });
 }
 
 $(document).ready(function(){
@@ -611,17 +660,37 @@ $(document).ready(function(){
 	var username = getCookie("username");
 	if (username.length > 0)
 		$("#login_text").text("Hello "+username+"!");
-});
 
-function getCookie(c_name) {
-    if (document.cookie.length>0) {
-        c_start=document.cookie.indexOf(c_name + "=");
-        if (c_start!=-1) { 
-            c_start=c_start + c_name.length+1;
-            c_end=document.cookie.indexOf(";",c_start);
-            if (c_end==-1) c_end=document.cookie.length;
-            return unescape(document.cookie.substring(c_start,c_end))
-        }
-    }
-    return "";
-}
+	$("#btn_logout").click(function(){
+		$("#rps_modal").modal( {
+            keyboard: false,
+            backdrop: "static"}
+        );
+        $("#reg_alert").hide();
+	});
+
+	$("#btn_sign").click(function(){
+		var username=$("#input_username").attr("value");
+	    var password=$("#input_password").attr("value");
+	    var alert = $("#reg_alert");
+	    $.getJSON("/cmapi/reglog", {username:username, password:password}, function(json){
+	        var err = json.error;
+	        var username = getCookie("username");
+	        if (err==0) {
+	            bsalert(alert, "success", "Sign in succeed!");
+	            $("#login_text").text("Hello "+username+"!");
+	            $("#rps_modal").modal('hide');
+	        	init();
+	        } else {
+	            bsalert(alert, "error", "Sign up/in failed:"+err);
+	        }
+	    })
+	    .error(function(){
+	        bsalert(alert, "error", "net error");
+	    });
+	});
+
+	Mousetrap.bind(["enter"], function() {
+		
+	});
+});

@@ -291,3 +291,124 @@ void cm_logout(evhtp_request_t *req, void *arg) {
     evbuffer_add_printf(req->buffer_out, "{\"error\":0}");
     evhtp_send_reply(req, EVHTP_RES_OK);
 }
+
+void cm_reglog(evhtp_request_t *req, void *arg) {
+    enum {
+        err_param = -1,
+        err_db = -2,
+        err_wrong_password = -3,
+    };
+    //parse param
+    int err = 0;
+    const char *username = kvs_find_string(&err, req->uri->query, "username");
+    const char *password = kvs_find_string(&err, req->uri->query, "password");
+    if (err) {
+        return cm_send_error(err_param, req);
+    }
+    size_t username_len = strlen(username);
+    size_t password_len = strlen(password);
+    if (username_len == 0 || password_len == 0
+            || username_len > UNESC_BUF_MAX || password_len > PASSWORD_MAX) {
+        return cm_send_error(err_param, req);
+    }
+    
+    //unescape username
+    char buf[UNESC_BUF_MAX+1] = {0};
+    unsigned char *ue_username = (unsigned char*)buf;
+    evhtp_unescape_string(&ue_username, (unsigned char*)username, username_len+1); //include \0
+    username = (const char*)buf;
+    username_len = strlen(username);
+    if (username_len > USERNAME_MAX) {
+        return cm_send_error(err_param, req);
+    }
+    
+    //sql select
+    cm_context* pctx = cm_get_context();
+    PGconn *acdb = pctx->accountdb;
+    const char *vars[1] = { 
+        username
+    };
+    PGresult *res = PQexecParams(acdb,  //free: PQclear(res);
+                                 "SELECT id, password FROM user_account WHERE username=$1",
+                                 1, NULL, vars, NULL, NULL, 0);
+    Autofree af_res(res, (Freefunc)PQclear);
+    if (PQresultStatus(res) != PGRES_TUPLES_OK) {
+        cm_send_error(err_db, req);
+        return;
+    }
+    
+    //encrypt password
+    char hash[20];
+    sha1(hash, password, strlen(password));
+    char *pw64 = base64_cf(hash, 20);
+    Autofree af_pw64(pw64);
+    
+    int rownums = PQntuples(res);
+    Autofree af_res2(NULL, NULL);
+    if (rownums == 0) { //register-------------
+        //db
+        const char *vars[2] = {
+            username,
+            pw64,
+        };
+
+        PGresult *res1 = PQexecParams(acdb,
+                                     "INSERT INTO user_account (username, password) VALUES($1, $2)",
+                                     2, NULL, vars, NULL, NULL, 0);
+        Autofree af_res1(res1, (Freefunc)PQclear);
+        if (PQresultStatus(res1) != PGRES_COMMAND_OK){
+            cm_send_error(err_db, req);
+            return;
+        }
+        
+        //query again
+        res = PQexecParams(acdb,
+                             "SELECT id, password FROM user_account WHERE username=$1",
+                             1, NULL, vars, NULL, NULL, 0);
+        af_res2.set(res, (Freefunc)PQclear);
+        if (PQresultStatus(res) != PGRES_TUPLES_OK) {
+            cm_send_error(err_db, req);
+            return;
+        }
+    }
+    
+    //login------------------
+    //userid
+    const char* struserid = PQgetvalue(res, 0, 0);
+    if (struserid == NULL) {
+        return cm_send_error(err_db, req);
+    }
+    
+    //password compare
+    const char* pwdb = PQgetvalue(res, 0, 1);
+    if (pwdb == NULL){
+        return cm_send_error(err_db, req);
+    }
+    if (strcmp(pwdb, pw64) != 0) {
+        return cm_send_error(err_wrong_password, req);
+    }
+    //session
+    char *oldtoken = findCookie_cf(req, "usertoken");
+    cm_session session;
+    session.userid = atoi(struserid);
+    strncpy(session.username, username, sizeof(session.username));
+    std::string usertoken;
+    if (oldtoken) {
+        delSession(oldtoken);
+    }
+    newSession(usertoken, session);
+    
+    //cookie
+    char cookie[256];
+    snprintf(cookie, sizeof(cookie), "usertoken=%s; path=/", usertoken.c_str());
+    evhtp_header_t *header = evhtp_header_new("Set-Cookie", cookie, 0, 1);
+    evhtp_headers_add_header(req->headers_out, header);
+    snprintf(cookie, sizeof(cookie), "username=%s; path=/", username);
+    header = evhtp_header_new("Set-Cookie", cookie, 0, 1);
+    evhtp_headers_add_header(req->headers_out, header);
+    
+    //reply
+    evbuffer_add_printf(req->buffer_out, "{\"error\":0}");
+    evhtp_send_reply(req, EVHTP_RES_OK);
+    
+}

@@ -203,8 +203,14 @@ Autofree::~Autofree() {
     free();
 }
 
+void Autofree::set(void* p, Freefunc func) {
+    free();
+    _p = p;
+    _freeFunc = func;
+}
+
 void Autofree::free() {
-    if (_p) {
+    if (_p && _freeFunc) {
         _freeFunc(_p);
         _p = NULL;
     }
@@ -603,4 +609,16 @@ int CommaReader::readString(std::string &out) {
         
     return 0;
 }
-    
+
+Profiler::Profiler() {
+    timespec ts;
+    clock_gettime(CLOCK_REALTIME, &ts);
+    _t = ts.tv_sec+ts.tv_nsec*0.000000001;
+}
+
+Profiler::~Profiler() {
+    timespec ts;
+    clock_gettime(CLOCK_REALTIME, &ts);
+    double t = ts.tv_sec+ts.tv_nsec*0.000000001;
+    lwinfo("%f", (float)(t-_t));
+}

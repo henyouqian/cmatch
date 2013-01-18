@@ -31,6 +31,7 @@ class Autofree {
 public:
     Autofree(void* p, Freefunc func = ::free);
     ~Autofree();
+    void set(void* p, Freefunc func);
     void free();
     
 private:
@@ -146,6 +147,15 @@ public:
 private:
     const char *_p;
     int _status;    //0:ok <0:error 1:end
+};
+
+class Profiler {
+public:
+    Profiler();
+    ~Profiler();
+    
+private:
+    double _t;
 };
 
 #endif // __CM_UTIL_H__
