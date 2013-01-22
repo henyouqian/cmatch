@@ -235,7 +235,7 @@ void Mempool::newChunk() {
     char *pChunk = new char[chunkSize];
     _chunks.push_back(pChunk);
     char *p = pChunk;
-    for (int i; i < _objsPerChunk; ++i) {
+    for (int i = 0; i < _objsPerChunk; ++i) {
         _freelist.push_back(p);
         p += _objSize;
     }

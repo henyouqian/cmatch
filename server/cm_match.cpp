@@ -1,14 +1,7 @@
 #include "cm_match.h"
+#include "cm_util.h"
 
-namespace {
-    DBID _idmax = 0;
-}
-
-void initCmatch() {
-    //todo: load _idmax
-    _idmax = 1;
-}
-
-DBID genDBID() {
-    return ++_idmax;
+void cm_dev_add_app(evhtp_request_t *req, void *arg) {
+    int err = 0;
+    const char *username = kvs_find_string(&err, req->uri->query, "name");
 }

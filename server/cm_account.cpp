@@ -8,7 +8,7 @@
 #include <string>
 
 static const size_t UNESC_BUF_MAX = 100;
-static const time_t SESSION_LIFE_SEC = 60*60;   //one hour
+static const time_t SESSION_LIFE_SEC = 60*60*24;//60*60;   //one hour
 
 static void newSession(std::string &newtoken, cm_session& insession) {
     uuid_t uuid;
@@ -20,25 +20,25 @@ static void newSession(std::string &newtoken, cm_session& insession) {
     redisContext *redis = cm_get_context()->redis;
     redisReply *reply = (redisReply*)redisCommand(redis, "SETEX session:%s %u %b",
                                      token, SESSION_LIFE_SEC, &insession, sizeof(insession));
-    freeReplyObject(reply);
+    Autofree _af(reply, freeReplyObject);
 }
 
 static void delSession(const char* token) {
     redisContext *redis = cm_get_context()->redis;
     redisReply *reply = (redisReply*)redisCommand(redis, "DEL session:%s", token);
-    freeReplyObject(reply);
+    Autofree _af(reply, freeReplyObject);
 }
 
 static int findSession(const char *token, cm_session& session) {
     redisContext *redis = cm_get_context()->redis;
     redisReply *reply = (redisReply*)redisCommand(redis, "GET session:%s", token);
+    Autofree _af(reply, freeReplyObject);
     int r = 0;
-    if (reply->type == REDIS_REPLY_STRING && reply->len == sizeof(session)) {
+    if (reply && reply->type == REDIS_REPLY_STRING && reply->len == sizeof(session)) {
         memcpy(&session, reply->str, sizeof(session));
     } else {
         r = -1;
     }
-    freeReplyObject(reply);
     return r;
 }
 
@@ -46,7 +46,7 @@ static int findSession(const char *token, cm_session& session) {
 int cm_find_session(evhtp_request_t *req, cm_session &session) {
     enum{
         err_no_cookie = -1,
-        err_not_found = -2,
+        err_expired = -2,
     };
     char *usertoken = findCookie_cf(req, "usertoken");
     if (!usertoken) {
@@ -56,7 +56,7 @@ int cm_find_session(evhtp_request_t *req, cm_session &session) {
     
     int err = findSession(usertoken, session);
     if (err) {
-        return err_not_found;
+        return err_expired;
     }
     return 0;
 }

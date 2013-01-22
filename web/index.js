@@ -202,23 +202,6 @@ $(document).ready(function(){
     $("#btn_dig").click(function() {
         window.location.href="dig.html";
     });
-    
-
-    $("#img1").load(function(){
-        draw(0);
-
-        var canvas = $("#dig_canvas")[0];
-        var ctx = canvas.getContext("2d");
-        var w = canvas.width;
-        var h = canvas.height;
-        imgdata = ctx.getImageData(0, 0, 14, 14);
-        console.log(imgdata);
-    });
-    
-    $.getJSON("/cmapi/getblock", function(json) {
-        a8 = Base64Binary.decode(json.data);
-        console.log(a8);
-    });
 });
 
 function register() {
@@ -391,15 +374,6 @@ function draw(t) {
     _t += 0.1;
     ctx.clearRect(0, 0, w, h);
     var x0 = Math.sin(_t)*10;
-    var img = $("#img1").get(0);
-    for (y = 0; y < h; y += d) {
-        for ( x = 0; x < w; x += d ) {
-            // ctx.fillStyle = get_random_color();
-            // ctx.fillRect(x0+x, y, _d, _d);
-        }
-    }
-    ctx.drawImage(img, 90, 383, 14, 14, 0, 0, 14, 14);
-    
     anim_handle = requestAnimationFrame(draw);
 }
 

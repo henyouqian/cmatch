@@ -2,7 +2,6 @@
 #include "cm_util.h"
 #include <uuid/uuid.h>
 #include <stdio.h>
-#include <libmemcached/memcached.h>
 #include <pthread.h>
 #include <unistd.h>
 #include <openssl/sha.h>
@@ -77,39 +76,6 @@ void dbtest() {
     PQfinish(conn);
 }
 
-void memcachetest() {
-    const char *config_string= "--SERVER=localhost --BINARY-PROTOCOL";
-    memcached_st *memc= memcached(config_string, strlen(config_string));
-    memcached_return_t rc = memcached_last_error(memc);
-    if (rc != MEMCACHED_SUCCESS) {
-        printf("memc error\n");
-    }
-    printf("begin\n");
-
-    int v = 111;
-    rc= memcached_set(memc, "a", 1, (const char*)&v, sizeof(int), 10000, (uint32_t)0);
-    if (rc != MEMCACHED_SUCCESS) {
-        printf("memcached_set error\n");
-    }
-
-    for (int i = 0; i < 10000; ++i) {
-        memcached_return_t rc;
-        size_t len;
-        char* c = memcached_get(memc, "a", 1, &len, 0, &rc);
-        if (rc != MEMCACHED_SUCCESS) {
-            printf("%s\n", memcached_last_error_message(memc));
-        }
-        if (c) {
-            int v = *(int*)c;
-            unused(&v);
-            free(c);
-        }
-    }
-    printf("end\n");
-    memcached_free(memc);
-}
-
-
 static pthread_key_t key;
 static void thread_free(void *p) {
     pthread_t* t = (pthread_t*)p;
@@ -183,6 +149,6 @@ void redistest() {
 
 void cm_test() {
     //redistest();
-    int n = strlen("xxx");
-    lwinfo("%d", n);
+    redisReply *reply = NULL;
+    Autofree _af(reply, freeReplyObject);
 }

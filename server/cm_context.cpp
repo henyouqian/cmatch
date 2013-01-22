@@ -8,7 +8,7 @@ static void *check_thread(void* arg) {
     while(1) {
         sleep(5);
         redisContext *redis = cm_get_context()->redis;
-        if (redis->err == REDIS_ERR_IO) {
+        if (redis->err) {
             _cm_context.redis = redisConnect("127.0.0.1", 6379);
         }
     }

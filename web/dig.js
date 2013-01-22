@@ -55,6 +55,17 @@ function getCookie(c_name) {
     return "";
 }
 
+function setCookie(c_name,value,expiredays) {
+    var exdate = new Date();
+    exdate.setDate(exdate.getDate()+expiredays);
+    document.cookie=c_name+ "=" +escape(value)+
+        ((expiredays==null) ? "" : ";expires="+exdate.toGMTString());
+}
+
+function delCookie(c_name){
+    setCookie(c_name, 0, -1);
+}
+
 function canvasAdj() {
 	var maprect = $("#map_canvas").offset();
 	var jqcanvas = $("#dig_canvas");
@@ -237,8 +248,14 @@ function fetchBlocks(notry) {
 						tileData[k] = 0;
 					}
 	 			}
-			}else{
-				
+			}else if (err == -4){ //err_needlogin
+				var username = getCookie("username");
+				showLoginModal();
+				if (username.length > 0) {
+					$("#input_username").attr("value", username);
+				}
+				delCookie("username");
+				delCookie("usertoken");
 			}
 	    }, "json");
 	}
@@ -471,17 +488,32 @@ function draw(dt) {
 			ctx.fillRect(canvasW/2-r, canvasH/2-r, r*2, r*2);
 		}
 	}
-	ctx.font = "400 32px/2 黑体";
+	ctx.font = "400 72px/2 黑体";
 	ctx.globalAlpha = 1.0;
-	ctx.fillStyle = "#ff0000";
+	ctx.fillStyle = "#222222";
 	ctx.textBaseline = "middle";
 	ctx.textAlign = "center";
-	ctx.fillText("a", 16, 16);
-	ctx.fillText("A", 16, 48);
+	// ctx.fillText("a", 36, 36);
+	// ctx.fillText("杭", 36, 36*3);
 }
 
 var fetchInterval = 0;
+
+function pause() {
+	clearInterval(fetchInterval);
+	cancelAnimationFrame(frame_handle);
+}
+
+function resume() {
+	pause();
+	frame();
+	fetchInterval = setInterval("fetchBlocks()", 5000+Math.random()*500);
+}
+
+
 function init() {
+	pause();
+	centerOffsetX = centerOffsetY = 0;
 	$.getJSON("/cmapi/diguserinfo", function(json) {
         var err = json.error;
         if (err==0) {
@@ -494,13 +526,12 @@ function init() {
         if (centerX == -1) {
         	setCenter(27437.5, 13388.5);
         	$("#login_text").text("Hello Guest!");
+        	delCookie("username");
+        	delCookie("usertoken");
         }
         
 		fetchBlocks();
-		cancelAnimationFrame(frame_handle);
-		frame();
-		clearInterval(fetchInterval);
-		fetchInterval = setInterval("fetchBlocks()", 5000+Math.random()*500);
+		resume();
     });
 }
 
@@ -639,7 +670,7 @@ $(document).ready(function(){
 
 	$("#dig_canvas").mousewheel(function(event, delta) {
 		zoom += delta;
-		zoom = Math.min(ZOOM_HIGH, zoom);
+		zoom = Math.min(ZOOM_HIGH, Math.max(zoom, ZOOM_LOW));
 		if (googleExist()) {
 			map.setZoom(zoom);
 		}
@@ -662,11 +693,7 @@ $(document).ready(function(){
 		$("#login_text").text("Hello "+username+"!");
 
 	$("#btn_logout").click(function(){
-		$("#rps_modal").modal( {
-            keyboard: false,
-            backdrop: "static"}
-        );
-        $("#reg_alert").hide();
+		showLoginModal();
 	});
 
 	$("#btn_sign").click(function(){
@@ -679,7 +706,7 @@ $(document).ready(function(){
 	        if (err==0) {
 	            bsalert(alert, "success", "Sign in succeed!");
 	            $("#login_text").text("Hello "+username+"!");
-	            $("#rps_modal").modal('hide');
+	            $("#login_modal").modal('hide');
 	        	init();
 	        } else {
 	            bsalert(alert, "error", "Sign up/in failed:"+err);
@@ -690,7 +717,36 @@ $(document).ready(function(){
 	    });
 	});
 
-	Mousetrap.bind(["enter"], function() {
-		
+	$("#login_modal").on("show", function(){
+		pause();
 	});
+
+	$("#login_modal").on("hide", function(){
+		resume();
+	});
+
+	Mousetrap.bind(["enter"], function() {
+		$("#cell_modal").modal( {
+	        keyboard: false,
+	        backdrop: "static"}
+	    );
+	    $("#runtime").attr("src", "http://zh.wikipedia.org/wiki/%E4%B8%8A%E6%B5%B7");
+	});
+
+
+
 });
+
+function showLoginModal() {
+	$("#login_modal").modal( {
+        keyboard: false,
+        backdrop: "static"}
+    );
+    $("#input_username").attr("value", "");
+    $("#input_password").attr("value", "");
+    $("#reg_alert").hide();
+}
+
+function getCell() {
+	
+}

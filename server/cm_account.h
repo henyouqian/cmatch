@@ -14,15 +14,10 @@ struct cm_session {
     char username[USERNAME_MAX];
 };
 
-enum {
-    cmerr_param = 1,
-    cmerr_nologin = 2,
-};
-
 void cm_send_error(int err, evhtp_request_t* req);
 void cm_send_ok(evhtp_request_t* req);
 
-//return err_no_cookie = -1, err_not_found = -2
+//return err_no_cookie = -1, err_expired = -2
 int cm_find_session(evhtp_request_t *req, cm_session &session);
 
 //username=string&password=string

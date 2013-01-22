@@ -6,10 +6,12 @@
 #include <fcntl.h>
 #include <hiredis/hiredis.h>
 #include <sstream>
+#define __STDC_FORMAT_MACROS
+#include <inttypes.h>
 
-static const int TILE_MAX = 32768;
-static const int TILES_PER_BLOCK_SIDE = 16;
-static const int BLOCK_MAX = TILE_MAX/TILES_PER_BLOCK_SIDE;
+static const int CELL_MAX = 32768;
+static const int CELLS_PER_BLOCK_SIDE = 16;
+static const int BLOCK_MAX = CELL_MAX/CELLS_PER_BLOCK_SIDE;
 
 void cm_img(evhtp_request_t *req, void *arg) {
     int fd = open("../resource/players.png", O_RDONLY);
@@ -28,6 +30,8 @@ void cm_getblock(evhtp_request_t *req, void *arg) {
     enum {
         err_param = -1,
         err_db = -2,
+        err_etc = -3,
+        err_needlogin = -4,
     };
     
     evbuffer *evbuf = req->buffer_in;
@@ -53,11 +57,18 @@ void cm_getblock(evhtp_request_t *req, void *arg) {
     cm_session session;
     int err = cm_find_session(req, session);
     if (err == 0) {
-        redisReply *reply = (redisReply*)redisCommand(redis, "HMSET diguser:%llu x %.1f y %.1f",session.userid, posX, posY);
+        char buf[128];
+        int n = snprintf(buf, sizeof(buf), "HMSET diguser:%" PRIu64 " x %.1f y %.1f", session.userid, posX, posY);
+        if (n < 0) {
+            return cm_send_error(err_etc, req);
+        }
+        redisReply *reply = (redisReply*)redisCommand(redis, buf);
         if (reply == NULL){
             return cm_send_error(err_db, req);
         }
         freeReplyObject(reply);
+    } if (err == -2) { //err_expired
+        return cm_send_error(err_needlogin, req);
     }
     
     std::stringstream ss;
@@ -92,7 +103,7 @@ void cm_getblock(evhtp_request_t *req, void *arg) {
         
     std::stringstream out;
     out << "{\"error\":0, \"data\":{";
-    char buf[TILES_PER_BLOCK_SIDE*TILES_PER_BLOCK_SIDE/8] = {0};
+    char buf[CELLS_PER_BLOCK_SIDE*CELLS_PER_BLOCK_SIDE/8] = {0};
     if (reply->type == REDIS_REPLY_ARRAY && reply->elements == nBlock) {
         for (size_t i = 0; i < reply->elements; ++i) {
             redisReply *rp = reply->element[i];
@@ -130,16 +141,19 @@ void cm_dig(evhtp_request_t *req, void *arg) {
     if (err) {
         return cm_send_error(err_param, req);
     }
-    if (x < 0 || x >= TILE_MAX || y < 0 || y >= TILE_MAX) {
+    if (x < 0 || x >= CELL_MAX || y < 0 || y >= CELL_MAX) {
         return cm_send_error(err_param, req);
     }
     int undig = kvs_find_int(&err, req->uri->query, "undig");
     
-    int blockX = x/TILES_PER_BLOCK_SIDE;
-    int blockY = y/TILES_PER_BLOCK_SIDE;
-    int idx = (y%TILES_PER_BLOCK_SIDE)*TILES_PER_BLOCK_SIDE+(x%TILES_PER_BLOCK_SIDE);
+    int blockX = x/CELLS_PER_BLOCK_SIDE;
+    int blockY = y/CELLS_PER_BLOCK_SIDE;
+    int idx = (y%CELLS_PER_BLOCK_SIDE)*CELLS_PER_BLOCK_SIDE+(x%CELLS_PER_BLOCK_SIDE);
     
     redisContext *redis = cm_get_context()->redis;
+    if (redis->err) {
+        return cm_send_error(err_db, req);
+    }
     if (undig)
         redisAppendCommand(redis, "SETBIT block:%u,%u %u 0", blockX, blockY, idx);
     else
@@ -151,7 +165,7 @@ void cm_dig(evhtp_request_t *req, void *arg) {
     freeReplyObject(reply);
     
     redisGetReply(redis, (void**)&reply);
-    char buf[TILES_PER_BLOCK_SIDE*TILES_PER_BLOCK_SIDE/8] = {0};
+    char buf[CELLS_PER_BLOCK_SIDE*CELLS_PER_BLOCK_SIDE/8] = {0};
     if (reply->type == REDIS_REPLY_STRING && reply->len <= (int)sizeof(buf)) {
         memcpy(buf, reply->str, reply->len);
         char *b64 = base64_cf(buf, sizeof(buf));
@@ -181,7 +195,8 @@ void cm_diguser_info(evhtp_request_t *req, void *arg) {
     if (err) {
         return cm_send_error(err_nologin, req);
     }
-    redisReply *reply = (redisReply*)redisCommand(redis, "HMGET diguser:%llu x y",session.userid);
+    redisReply *reply = (redisReply*)redisCommand(redis, "HMGET diguser:%" PRIu64 " x y",session.userid);
+    Autofree _af_reply(reply, freeReplyObject);
     if (reply == NULL || reply->type != REDIS_REPLY_ARRAY || reply->elements != 2) {
         return cm_send_error(err_db, req);
     }
@@ -193,5 +208,41 @@ void cm_diguser_info(evhtp_request_t *req, void *arg) {
     }
     evbuffer_add_printf(req->buffer_out, "{\"error\":0, \"x\":\"%s\", \"y\":\"%s\"}", x, y);
     evhtp_send_reply(req, EVHTP_RES_OK);
-    freeReplyObject(reply);
+}
+
+void cm_getcell(evhtp_request_t *req, void *arg) {
+    enum {
+        err_param = -1,
+        err_db = -2,
+    };
+    int err = 0;
+    int x = kvs_find_int(&err, req->uri->query, "x");
+    int y = kvs_find_int(&err, req->uri->query, "y");
+    if (err) {
+        return cm_send_error(err_param, req);
+    }
+    if (x < 0 || x >= CELL_MAX || y < 0 || y >= CELL_MAX) {
+        return cm_send_error(err_param, req);
+    }
+    
+    redisContext *redis = cm_get_context()->redis;
+    if (redis->err) {
+        return cm_send_error(err_db, req);
+    }
+//    int blockX = x / CELLS_PER_BLOCK_SIDE;
+//    int blockY = y / CELLS_PER_BLOCK_SIDE;
+//    int idx = (y%CELLS_PER_BLOCK_SIDE)*CELLS_PER_BLOCK_SIDE+(x%CELLS_PER_BLOCK_SIDE);
+    redisReply *reply = (redisReply*)redisCommand(redis, "HMGET cell:%d,%d text hp",x, y);
+    Autofree _af_reply(reply, freeReplyObject);
+    if (reply == NULL || reply->type != REDIS_REPLY_ARRAY || reply->elements != 2) {
+        return cm_send_error(err_db, req);
+    }
+    const char *text = reply->element[0]->str;
+    const char *hp = reply->element[1]->str;
+    if (text == NULL || hp == NULL) {
+        text = "";
+        hp = "0";
+    }
+    evbuffer_add_printf(req->buffer_out, "{\"error\":0, \"text\":\"%s\", \"hp\":\"%s\"}", text, hp);
+    evhtp_send_reply(req, EVHTP_RES_OK);
 }

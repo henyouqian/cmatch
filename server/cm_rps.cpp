@@ -4,6 +4,8 @@
 #include "cm_context.h"
 #include <list>
 #include <hiredis/hiredis.h>
+#define __STDC_FORMAT_MACROS
+#include <inttypes.h>
 
 namespace {
     const size_t RPS_LEN = 10;
@@ -15,24 +17,28 @@ namespace {
 }
 
 void cm_rps(evhtp_request_t *req, void *arg) {
+    enum {
+        err_nologin = -1,
+        err_param = -2,
+    };
     //check auth
     cm_session session;
     int err = cm_find_session(req, session);
     if (err) {
-        cm_send_error(cmerr_nologin, req);
+        cm_send_error(err_nologin, req);
         return;
     }
     
     //parse rps
     const char *rps = kvs_find_string(&err, req->uri->query, "data");
     if (rps == NULL || strlen(rps) != RPS_LEN) {
-        cm_send_error(cmerr_param, req);
+        cm_send_error(err_param, req);
         return;
     }
     
     //redis
     redisContext *redis = cm_get_context()->redis;
-    redisAppendCommand(redis, "MGET last_user_rps_id:%llu curr_rps_id", session.userid);
+    redisAppendCommand(redis, "MGET last_user_rps_id:%" PRIu64 " curr_rps_id", session.userid);
     char buf[512];
     MemIO mio(buf, sizeof(buf));
     mio.writeUint64(session.userid);

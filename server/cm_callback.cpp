@@ -25,6 +25,7 @@ void cm_register_cbs(evhtp_t *htp) {
     set_cb(htp, "/cmapi/getblock", cm_getblock, NULL);
     set_cb(htp, "/cmapi/dig", cm_dig, NULL);
     set_cb(htp, "/cmapi/diguserinfo", cm_diguser_info, NULL);
+    set_cb(htp, "/cmapi/getcell", cm_getcell, NULL);
     
 }
 
