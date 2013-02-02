@@ -2,6 +2,7 @@
 #include "cm_account.h"
 #include "cm_rps.h"
 #include "cm_dig.h"
+#include "cm_match.h"
 #include <vector>
 
 namespace {
@@ -26,6 +27,11 @@ void cm_register_cbs(evhtp_t *htp) {
     set_cb(htp, "/cmapi/dig", cm_dig, NULL);
     set_cb(htp, "/cmapi/diguserinfo", cm_diguser_info, NULL);
     set_cb(htp, "/cmapi/getcell", cm_getcell, NULL);
+    
+    set_cb(htp, "/cmapi/dev/listapps", cmdev_list_apps, NULL);
+    set_cb(htp, "/cmapi/dev/addapp", cmdev_add_app, NULL);
+    set_cb(htp, "/cmapi/dev/editapp", cmdev_edit_app, NULL);
+    set_cb(htp, "/cmapi/dev/getappsecrit", cmdev_get_app_secret, NULL);
     
 }
 

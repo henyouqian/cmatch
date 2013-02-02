@@ -10,7 +10,7 @@
 static const size_t UNESC_BUF_MAX = 100;
 static const time_t SESSION_LIFE_SEC = 60*60*24;//60*60;   //one hour
 
-static void newSession(std::string &newtoken, cm_session& insession) {
+static int newSession(std::string &newtoken, cm_session& insession) {
     uuid_t uuid;
     uuid_generate(uuid);
     char *token = base64_cf((const char*)uuid, sizeof(uuid));
@@ -18,9 +18,17 @@ static void newSession(std::string &newtoken, cm_session& insession) {
     newtoken = token;
     
     redisContext *redis = cm_get_context()->redis;
+    char buf[512];
+    MemIO mio(buf, sizeof(buf));
+    mio.writeString(insession.userid.c_str());
+    mio.writeString(insession.username.c_str());
     redisReply *reply = (redisReply*)redisCommand(redis, "SETEX session:%s %u %b",
-                                     token, SESSION_LIFE_SEC, &insession, sizeof(insession));
+                                     token, SESSION_LIFE_SEC, mio.p0, mio.length());
     Autofree _af(reply, freeReplyObject);
+    if (!reply) {
+        return -1;
+    }
+    return 0;
 }
 
 static void delSession(const char* token) {
@@ -34,8 +42,16 @@ static int findSession(const char *token, cm_session& session) {
     redisReply *reply = (redisReply*)redisCommand(redis, "GET session:%s", token);
     Autofree _af(reply, freeReplyObject);
     int r = 0;
-    if (reply && reply->type == REDIS_REPLY_STRING && reply->len == sizeof(session)) {
-        memcpy(&session, reply->str, sizeof(session));
+    if (reply && reply->type == REDIS_REPLY_STRING ) {
+        MemIO mio(reply->str, reply->len);
+        const char *userid = mio.readString();
+        const char *username = mio.readString();
+        if (userid && username) {
+            session.userid = userid;
+            session.username = username;
+        } else {
+            r = -1;
+        }
     } else {
         r = -1;
     }
@@ -59,6 +75,11 @@ int cm_find_session(evhtp_request_t *req, cm_session &session) {
         return err_expired;
     }
     return 0;
+}
+
+void cm_send_err(const char* err, evhtp_request_t* req) {
+    evbuffer_add_printf(req->buffer_out, "{\"error\":%s}", err);
+    evhtp_send_reply(req, EVHTP_RES_OK);
 }
 
 void cm_send_error(int err, evhtp_request_t* req) {
@@ -142,7 +163,7 @@ void cm_login(evhtp_request_t *req, void *arg) {
         err_no_user = -2,
         err_wrong_password = -3,
         err_db = -4,
-        err_memc = -5,
+        err_redis = -5,
     };
     
     //parse param
@@ -219,13 +240,16 @@ void cm_login(evhtp_request_t *req, void *arg) {
     //session
     char *oldtoken = findCookie_cf(req, "usertoken");
     cm_session session;
-    session.userid = atoi(struserid);
-    strncpy(session.username, ue_username, sizeof(session.username));
+    session.userid = struserid;
+    session.username = ue_username;
     std::string usertoken;
     if (oldtoken) {
         delSession(oldtoken);
     }
-    newSession(usertoken, session);
+    err = newSession(usertoken, session);
+    if (err) {
+        return cm_send_error(err_redis, req);
+    }
     
     //cookie
     char cookie[256];
@@ -390,8 +414,8 @@ void cm_reglog(evhtp_request_t *req, void *arg) {
     //session
     char *oldtoken = findCookie_cf(req, "usertoken");
     cm_session session;
-    session.userid = atoi(struserid);
-    strncpy(session.username, username, sizeof(session.username));
+    session.userid = struserid;
+    session.username = username;
     std::string usertoken;
     if (oldtoken) {
         delSession(oldtoken);

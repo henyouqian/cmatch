@@ -13,19 +13,43 @@ const char *kvs_find_string(int *err, evhtp_kvs_t *kvs, const char *key) {
     return str;
 }
 
-int kvs_find_int(int *err, evhtp_kvs_t *kvs, const char *key) {
+int32_t kvs_find_int32(int *err, evhtp_kvs_t *kvs, const char *key) {
     const char *str = evhtp_kv_find(kvs, key);
     if (str == NULL) {
         *err = 1;
         return 0;
     }
-    char* pEnd = NULL;
-    int n = strtol(str, &pEnd, 0);
-    if ((n == 0 && *pEnd != '\0')
-            ||(n == INT_MAX || n == INT_MIN)) {
+    int32_t n = s2int32(str, err);
+    return n;
+}
+
+uint32_t kvs_find_uint32(int *err, evhtp_kvs_t *kvs, const char *key) {
+    const char *str = evhtp_kv_find(kvs, key);
+    if (str == NULL) {
         *err = 1;
         return 0;
     }
+    uint32_t n = s2uint32(str, err);
+    return n;
+}
+
+int64_t kvs_find_int64(int *err, evhtp_kvs_t *kvs, const char *key) {
+    const char *str = evhtp_kv_find(kvs, key);
+    if (str == NULL) {
+        *err = 1;
+        return 0;
+    }
+    int64_t n = s2int64(str, err);
+    return n;
+}
+
+uint64_t kvs_find_uint64(int *err, evhtp_kvs_t *kvs, const char *key) {
+    const char *str = evhtp_kv_find(kvs, key);
+    if (str == NULL) {
+        *err = 1;
+        return 0;
+    }
+    uint64_t n = s2uint64(str, err);
     return n;
 }
 
@@ -45,12 +69,34 @@ float kvs_find_float(int *err, evhtp_kvs_t *kvs, const char *key) {
 }
 
 void unused(const void *p) {
-     
+    
 }
 
+char from_hex(char ch) {
+    return isdigit(ch) ? ch - '0' : tolower(ch) - 'a' + 10;
+}
 
-
-
+void url_decode(std::string& out, const char *str) {
+    const char *pstr = str;
+    char *buf = (char*)malloc(strlen(str) + 1);
+    char *pbuf = buf;
+    while (*pstr) {
+        if (*pstr == '%') {
+            if (pstr[1] && pstr[2]) {
+                *pbuf++ = from_hex(pstr[1]) << 4 | from_hex(pstr[2]);
+                pstr += 2;
+            }
+        } else if (*pstr == '+') {
+            *pbuf++ = ' ';
+        } else {
+            *pbuf++ = *pstr;
+        }
+        pstr++;
+    }
+    *pbuf = '\0';
+    out = buf;
+    free(buf);
+}
 
 
 const char encodeCharacterTable[65] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
@@ -151,11 +197,6 @@ void *unbase64_cf(const char *input, size_t *output_length) {
     }
     return output;
 }
-
-
-
-
-
 
 void sha1(sha1buf_t out, const void *input, int len) {
     SHA_CTX s;
@@ -420,17 +461,17 @@ float MemIO::readFloat(){
     return f;
 }
 
-char* MemIO::readString(){
+const char* MemIO::readString(){
     int len = strlen(p)+1;
     char *p= (char*)read(len);
     return p;
 }
 
-#define _check_str_null    if (str == NULL) {           \
-                                    if (err)            \
-                                        *err = 1;       \
-                                    return 0;           \
-                                }
+#define _check_str_null     if (str == NULL) {      \
+                                if (err)            \
+                                    *err = 1;       \
+                                return 0;           \
+                            }
 
 int32_t s2int32(const char* str, int* err) {
     _check_str_null

@@ -3,6 +3,7 @@
 
 #include <evhtp.h>
 #include <stdint.h>
+#include <string>
 
 enum {
     USERNAME_MAX = 40,
@@ -10,10 +11,11 @@ enum {
 };
 
 struct cm_session {
-    uint64_t userid;
-    char username[USERNAME_MAX];
+    std::string userid;
+    std::string username;
 };
 
+void cm_send_err(const char* err, evhtp_request_t* req);
 void cm_send_error(int err, evhtp_request_t* req);
 void cm_send_ok(evhtp_request_t* req);
 

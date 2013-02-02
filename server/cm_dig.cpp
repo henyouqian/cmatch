@@ -6,8 +6,6 @@
 #include <fcntl.h>
 #include <hiredis/hiredis.h>
 #include <sstream>
-#define __STDC_FORMAT_MACROS
-#include <inttypes.h>
 
 static const int CELL_MAX = 32768;
 static const int CELLS_PER_BLOCK_SIDE = 16;
@@ -58,7 +56,7 @@ void cm_getblock(evhtp_request_t *req, void *arg) {
     int err = cm_find_session(req, session);
     if (err == 0) {
         char buf[128];
-        int n = snprintf(buf, sizeof(buf), "HMSET diguser:%" PRIu64 " x %.1f y %.1f", session.userid, posX, posY);
+        int n = snprintf(buf, sizeof(buf), "HMSET diguser:%s x %.1f y %.1f", session.userid.c_str(), posX, posY);
         if (n < 0) {
             return cm_send_error(err_etc, req);
         }
@@ -136,15 +134,15 @@ void cm_dig(evhtp_request_t *req, void *arg) {
         err_db = -2,
     };
     int err = 0;
-    int x = kvs_find_int(&err, req->uri->query, "x");
-    int y = kvs_find_int(&err, req->uri->query, "y");
+    int x = kvs_find_int32(&err, req->uri->query, "x");
+    int y = kvs_find_int32(&err, req->uri->query, "y");
     if (err) {
         return cm_send_error(err_param, req);
     }
     if (x < 0 || x >= CELL_MAX || y < 0 || y >= CELL_MAX) {
         return cm_send_error(err_param, req);
     }
-    int undig = kvs_find_int(&err, req->uri->query, "undig");
+    int undig = kvs_find_int32(&err, req->uri->query, "undig");
     
     int blockX = x/CELLS_PER_BLOCK_SIDE;
     int blockY = y/CELLS_PER_BLOCK_SIDE;
@@ -195,7 +193,7 @@ void cm_diguser_info(evhtp_request_t *req, void *arg) {
     if (err) {
         return cm_send_error(err_nologin, req);
     }
-    redisReply *reply = (redisReply*)redisCommand(redis, "HMGET diguser:%" PRIu64 " x y",session.userid);
+    redisReply *reply = (redisReply*)redisCommand(redis, "HMGET diguser:%s x y", session.userid.c_str());
     Autofree _af_reply(reply, freeReplyObject);
     if (reply == NULL || reply->type != REDIS_REPLY_ARRAY || reply->elements != 2) {
         return cm_send_error(err_db, req);
@@ -216,8 +214,8 @@ void cm_getcell(evhtp_request_t *req, void *arg) {
         err_db = -2,
     };
     int err = 0;
-    int x = kvs_find_int(&err, req->uri->query, "x");
-    int y = kvs_find_int(&err, req->uri->query, "y");
+    int x = kvs_find_int32(&err, req->uri->query, "x");
+    int y = kvs_find_int32(&err, req->uri->query, "y");
     if (err) {
         return cm_send_error(err_param, req);
     }

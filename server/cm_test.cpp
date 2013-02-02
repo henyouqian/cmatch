@@ -128,7 +128,7 @@ void redistest() {
     mio.set(p, reply->len);
     int a = mio.readInt();
     a = mio.readInt();
-    char* b = mio.readString();
+    const char* b = mio.readString();
     float d = mio.readFloat();
     int64_t e = mio.readInt64();
     lwinfo("%d, %s, %f, %lld", a, b, d, e);

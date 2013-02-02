@@ -4,15 +4,27 @@
 #include <evhtp.h>
 
 //@param
-//name=tring
-void cm_dev_add_app(evhtp_request_t *req, void *arg);
+//use cookie
+void cmdev_list_apps(evhtp_request_t *req, void *arg);
 
 //@param
-void cm_dev_add_game(evhtp_request_t *req, void *arg);
+//appname:string
+void cmdev_add_app(evhtp_request_t *req, void *arg);
+
+//@param
+//appid:id & appname:string
+void cmdev_edit_app(evhtp_request_t *req, void *arg);
+
+//@param
+//appid:id
+void cmdev_get_app_secret(evhtp_request_t *req, void *arg);
+
+//@param
+void cmdev_add_game(evhtp_request_t *req, void *arg);
 
 //@param
 //
-void cm_dev_add_match(evhtp_request_t *req, void *arg);
+void cmdev_add_match(evhtp_request_t *req, void *arg);
 
 
 //@param

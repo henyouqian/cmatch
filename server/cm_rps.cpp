@@ -4,8 +4,6 @@
 #include "cm_context.h"
 #include <list>
 #include <hiredis/hiredis.h>
-#define __STDC_FORMAT_MACROS
-#include <inttypes.h>
 
 namespace {
     const size_t RPS_LEN = 10;
@@ -38,11 +36,11 @@ void cm_rps(evhtp_request_t *req, void *arg) {
     
     //redis
     redisContext *redis = cm_get_context()->redis;
-    redisAppendCommand(redis, "MGET last_user_rps_id:%" PRIu64 " curr_rps_id", session.userid);
+    redisAppendCommand(redis, "MGET last_user_rps_id:%s curr_rps_id", session.userid.c_str());
     char buf[512];
     MemIO mio(buf, sizeof(buf));
-    mio.writeUint64(session.userid);
-    mio.writeString(session.username);
+    mio.writeString(session.userid.c_str());
+    mio.writeString(session.username.c_str());
     mio.writeString(rps);
     redisAppendCommand(redis, "GETSET curr_rps %b", mio.p0, mio.length());
     redisAppendCommand(redis, "INCR curr_rps_id");
@@ -102,6 +100,6 @@ void cm_rps(evhtp_request_t *req, void *arg) {
     redisGetReply(redis, (void**)&reply);
     freeReplyObject(reply);
 
-    reply = (redisReply*)redisCommand(redis, "SET last_user_rps_id:%llu %u", session.userid, curr_rps_id+1);
+    reply = (redisReply*)redisCommand(redis, "SET last_user_rps_id:%s %u", session.userid.c_str(), curr_rps_id+1);
     freeReplyObject(reply);
 }

@@ -7,9 +7,14 @@ static cm_context _cm_context;
 static void *check_thread(void* arg) {
     while(1) {
         sleep(5);
-        redisContext *redis = cm_get_context()->redis;
-        if (redis->err) {
+        if (_cm_context.redis->err) {
             _cm_context.redis = redisConnect("127.0.0.1", 6379);
+        }
+        if (PQstatus(_cm_context.accountdb) != CONNECTION_OK) {
+            _cm_context.cmatchdb = PQsetdbLogin("127.0.0.1","5432","","","account_db","postgres","nmmgbnmmgb");
+        }
+        if (PQstatus(_cm_context.cmatchdb) != CONNECTION_OK) {
+            _cm_context.cmatchdb = PQsetdbLogin("127.0.0.1","5432","","","cmatch_db","postgres","nmmgbnmmgb");
         }
     }
     

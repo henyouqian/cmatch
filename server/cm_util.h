@@ -7,10 +7,15 @@
 #include <string>
 
 const char *kvs_find_string(int *err, evhtp_kvs_t *kvs, const char *key);
-int kvs_find_int(int *err, evhtp_kvs_t *kvs, const char *key);
+int32_t kvs_find_int32(int *err, evhtp_kvs_t *kvs, const char *key);
+uint32_t kvs_find_uint32(int *err, evhtp_kvs_t *kvs, const char *key);
+int64_t kvs_find_int64(int *err, evhtp_kvs_t *kvs, const char *key);
+uint64_t kvs_find_uint64(int *err, evhtp_kvs_t *kvs, const char *key);
 float kvs_find_float(int *err, evhtp_kvs_t *kvs, const char *key);
 
 void unused(const void *p);
+
+void url_decode(std::string& out, const char *str);
 
 char *base64_cf(const void *input, size_t length);
 void *unbase64_cf(const char *input, size_t *length);
@@ -117,7 +122,7 @@ struct MemIO{
     int64_t         readInt64();
     uint64_t        readUint64();
     float           readFloat();
-    char*           readString();
+    const char*     readString();
 };
 
 int32_t     s2int32(const char* str, int* err = NULL);
